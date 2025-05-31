@@ -1,0 +1,72 @@
+[
+  {
+    "id": "cat-001",
+    "name": "编程技术",
+    "slug": "programming",
+    "description": "分享编程技术、开发经验和技术文章",
+    "icon": "Code",
+    "color": "#3b82f6",
+    "order": 1,
+    "isVisible": true,
+    "articleCount": 2,
+    "createdAt": "2025-05-30T10:00:00.000Z",
+    "updatedAt": "2025-05-30T10:00:00.000Z",
+    "author": "admin"
+  },
+  {
+    "id": "cat-002",
+    "name": "摄影分享",
+    "slug": "photography",
+    "description": "摄影作品展示和摄影技巧分享",
+    "icon": "Camera",
+    "color": "#10b981",
+    "order": 2,
+    "isVisible": true,
+    "articleCount": 2,
+    "createdAt": "2025-05-30T09:00:00.000Z",
+    "updatedAt": "2025-05-30T09:00:00.000Z",
+    "author": "admin"
+  },
+  {
+    "id": "cat-003",
+    "name": "文字教程",
+    "slug": "tutorial",
+    "icon": "BookOpen",
+    "color": "#f59e0b",
+    "order": 3,
+    "isVisible": false,
+    "articleCount": 1,
+    "createdAt": "2025-05-30T08:00:00.000Z",
+    "updatedAt": "2025-05-31T03:18:44.443Z",
+    "author": "admin",
+    "description": "详细的教程和学习指南"
+  },
+  {
+    "id": "cat-004",
+    "name": "项目展示",
+    "slug": "project",
+    "description": "个人项目和作品展示",
+    "icon": "Boxes",
+    "color": "#8b5cf6",
+    "order": 4,
+    "isVisible": true,
+    "articleCount": 1,
+    "createdAt": "2025-05-30T07:00:00.000Z",
+    "updatedAt": "2025-05-30T07:00:00.000Z",
+    "author": "admin"
+  },
+  {
+    "id": "cat-005",
+    "name": "生活随笔",
+    "slug": "life",
+    "icon": "PenTool",
+    "color": "#ef4444",
+    "order": 5,
+    "isVisible": true,
+    "articleCount": 0,
+    "createdAt": "2025-05-30T06:00:00.000Z",
+    "updatedAt": "2025-05-31T03:18:31.178Z",
+    "author": "admin",
+    "description": "生活感悟和随笔记录"
+  }
+]

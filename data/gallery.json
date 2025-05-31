@@ -1,0 +1,102 @@
+[
+  {
+    "id": "img-001",
+    "title": "现代Web开发技术",
+    "description": "探索最新的前端开发技术栈和最佳实践",
+    "url": "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200&h=600&fit=crop",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
+    "category": "technology",
+    "tags": [
+      "编程",
+      "技术",
+      "前端"
+    ],
+    "featured": true,
+    "createdAt": "2025-05-30T10:00:00.000Z",
+    "updatedAt": "2025-05-30T10:00:00.000Z",
+    "author": "admin",
+    "viewCount": 128,
+    "likes": 23,
+    "order": 1
+  },
+  {
+    "id": "img-002",
+    "title": "AI与未来科技",
+    "description": "人工智能如何改变我们的生活和工作方式",
+    "url": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=600&fit=crop",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=300&h=200&fit=crop",
+    "category": "ai",
+    "tags": [
+      "AI",
+      "人工智能",
+      "科技"
+    ],
+    "featured": true,
+    "createdAt": "2025-05-30T09:00:00.000Z",
+    "updatedAt": "2025-05-30T09:00:00.000Z",
+    "author": "admin",
+    "viewCount": 95,
+    "likes": 18,
+    "order": 2
+  },
+  {
+    "id": "img-003",
+    "title": "数据可视化之美",
+    "description": "用数据讲述故事，让复杂信息变得直观易懂",
+    "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=300&h=200&fit=crop",
+    "category": "data",
+    "tags": [
+      "数据",
+      "可视化",
+      "图表"
+    ],
+    "featured": true,
+    "createdAt": "2025-05-30T08:00:00.000Z",
+    "updatedAt": "2025-05-30T08:00:00.000Z",
+    "author": "admin",
+    "viewCount": 76,
+    "likes": 15,
+    "order": 3
+  },
+  {
+    "id": "img-004",
+    "title": "云端架构设计",
+    "description": "现代云原生应用的架构设计原则和实践",
+    "url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&h=600&fit=crop",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=300&h=200&fit=crop",
+    "category": "cloud",
+    "tags": [
+      "云计算",
+      "架构",
+      "微服务"
+    ],
+    "featured": false,
+    "createdAt": "2025-05-30T07:00:00.000Z",
+    "updatedAt": "2025-05-30T07:00:00.000Z",
+    "author": "admin",
+    "viewCount": 54,
+    "likes": 9,
+    "order": 4
+  },
+  {
+    "id": "img-005",
+    "title": "移动应用开发",
+    "description": "跨平台移动应用开发的最新趋势和技术",
+    "url": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=1200&h=600&fit=crop",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=300&h=200&fit=crop",
+    "category": "mobile",
+    "tags": [
+      "移动开发",
+      "跨平台",
+      "应用"
+    ],
+    "featured": true,
+    "createdAt": "2025-05-30T06:00:00.000Z",
+    "updatedAt": "2025-05-30T17:28:29.648Z",
+    "author": "admin",
+    "viewCount": 43,
+    "likes": 7,
+    "order": 5
+  }
+]
