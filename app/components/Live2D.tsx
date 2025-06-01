@@ -8,7 +8,6 @@ import dynamic from "next/dynamic"
 declare global {
   interface Window {
     L2Dwidget: any
-    difyChatbotConfig: any
   }
 }
 
@@ -54,97 +53,15 @@ const Live2D = () => {
             dialog: {
               enable: true,
               script: {
-                "tap body": "点击我旁边的聊天按钮和我对话吧！",
-                "tap face": "我是你的AI助手，有什么可以帮你的吗？",
+                "tap body": "我是Live2D看板娘，点击右下角的蓝色按钮可以和AI助手聊天哦！",
+                "tap face": "想要聊天的话，请使用页面右下角的AI助手～",
               },
             },
           })
-
-          // 添加自定义聊天按钮
-          setTimeout(() => {
-            addChatButton()
-          }, 2000)
         } catch (error) {
           console.error("Failed to initialize Live2D:", error)
         }
       }
-    }
-
-    const addChatButton = () => {
-      // 移除现有的聊天按钮
-      const existingButton = document.getElementById('live2d-chat-button')
-      if (existingButton) {
-        existingButton.remove()
-      }
-
-      // 创建聊天按钮容器
-      const chatButtonContainer = document.createElement('div')
-      chatButtonContainer.id = 'live2d-chat-button'
-      chatButtonContainer.style.cssText = `
-        position: fixed;
-        right: ${isMobile ? '130px' : '180px'};
-        bottom: ${isMobile ? '120px' : '70px'};
-        width: 50px;
-        height: 50px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        z-index: 9999;
-        transition: all 0.3s ease;
-        animation: pulse 2s infinite;
-      `
-
-      // 添加悬停效果
-      chatButtonContainer.onmouseenter = () => {
-        chatButtonContainer.style.transform = 'scale(1.1)'
-      }
-      chatButtonContainer.onmouseleave = () => {
-        chatButtonContainer.style.transform = 'scale(1)'
-      }
-
-      // 添加SVG图标
-      chatButtonContainer.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `
-
-      // 添加CSS动画
-      if (!document.getElementById('live2d-chat-styles')) {
-        const style = document.createElement('style')
-        style.id = 'live2d-chat-styles'
-        style.textContent = `
-          @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
-          }
-        `
-        document.head.appendChild(style)
-      }
-      
-      // 添加点击事件 - 触发Dify聊天窗口
-      chatButtonContainer.addEventListener('click', () => {
-        // 等待Dify加载完成后触发聊天窗口
-        const checkDifyAndOpen = () => {
-          const difyButton = document.getElementById('dify-chatbot-bubble-button')
-          if (difyButton) {
-            difyButton.click()
-          } else {
-            // 如果Dify还没加载完成，显示提示
-            alert('AI聊天助手正在加载中，请稍后再试...')
-          }
-        }
-        
-        // 延迟一下确保Dify已经加载
-        setTimeout(checkDifyAndOpen, 100)
-      })
-      
-      document.body.appendChild(chatButtonContainer)
     }
 
     const loadScript = () => {
@@ -183,11 +100,6 @@ const Live2D = () => {
     return () => {
       if (window.L2Dwidget && window.L2Dwidget.clearWidget) {
         window.L2Dwidget.clearWidget()
-      }
-      // 清理聊天按钮
-      const chatButton = document.getElementById('live2d-chat-button')
-      if (chatButton) {
-        chatButton.remove()
       }
     }
   }, [pathname, isMobile, isClient])

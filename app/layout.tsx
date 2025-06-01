@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar"
 import Sidebar from "./components/Sidebar"
 import ParticleBackground from "./components/ParticleBackground"
 import Live2D from "./components/Live2D"
+import ChatWidget from "./components/Chat/ChatWidget"
 import { Toaster } from "sonner"
 import type { Metadata } from 'next'
 
@@ -134,37 +135,6 @@ export default function RootLayout({
             })
           }}
         />
-        
-        {/* Dify聊天机器人配置 */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.difyChatbotConfig = {
-                token: 'BiQN5OxWMyIA03Gr',
-                baseUrl: 'http://localhost'
-              };
-            `
-          }}
-        />
-        <script
-          src="http://localhost/embed.min.js"
-          id="BiQN5OxWMyIA03Gr"
-          defer
-        />
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
-              #dify-chatbot-bubble-button {
-                background-color: #1C64F2 !important;
-                display: none !important;
-              }
-              #dify-chatbot-bubble-window {
-                width: 24rem !important;
-                height: 40rem !important;
-              }
-            `
-          }}
-        />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider>
@@ -180,6 +150,7 @@ export default function RootLayout({
               </div>
             </div>
             <Live2D />
+            <ChatWidget />
             <Toaster
               position="top-right"
               expand={false}

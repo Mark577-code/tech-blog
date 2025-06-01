@@ -1,31 +1,32 @@
 {
   "name": "现代化技术博客",
   "short_name": "Tech Blog",
-  "description": "一个基于Next.js 15构建的现代化个人技术博客",
+  "description": "分享编程经验、技术文章、项目作品和摄影作品的个人技术博客",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#000000",
   "theme_color": "#0070f3",
   "orientation": "portrait-primary",
-  "categories": ["technology", "blog", "portfolio"],
-  "lang": "zh-CN",
-  "scope": "/",
   "icons": [
     {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
       "src": "/favicon-16x16.png",
-      "sizes": "16x16",
-      "type": "image/png"
+      "type": "image/png",
+      "sizes": "16x16"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180"
     },
     {
       "src": "/favicon-32x32.png",
       "sizes": "32x32",
       "type": "image/png"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "apple-touch-icon"
     },
     {
       "src": "/android-chrome-192x192.png",
@@ -55,5 +56,8 @@
     }
   ],
   "related_applications": [],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "categories": ["technology", "education", "productivity"],
+  "lang": "zh-CN",
+  "scope": "/"
 } 

@@ -9,21 +9,34 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Search } from 'lucide-react'
 import type { Article } from '@/types/article'
-
-const categoryLabels: Record<string, string> = {
-  programming: "编程技术",
-  photography: "摄影分享", 
-  tutorial: "文字教程",
-  project: "项目展示"
-}
+import type { Category } from '@/types/category'
 
 export default function ArticlesPage() {
   const [articles, setArticles] = useState<Article[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories?isVisible=true&sortBy=order&sortOrder=asc')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setCategories(data.data.categories)
+        }
+      }
+    } catch (error) {
+      console.error('获取分类失败:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchCategories()
+  }, [])
 
   useEffect(() => {
     fetchArticles()
@@ -71,6 +84,11 @@ export default function ArticlesPage() {
     })
   }
 
+  const getCategoryLabel = (slug: string): string => {
+    const category = categories.find(cat => cat.slug === slug)
+    return category ? category.name : slug
+  }
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-4xl font-bold mb-8">文章列表</h1>
@@ -92,8 +110,16 @@ export default function ArticlesPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">所有分类</SelectItem>
-            {Object.entries(categoryLabels).map(([key, label]) => (
-              <SelectItem key={key} value={key}>{label}</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.slug}>
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  {category.name}
+                </div>
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -125,8 +151,8 @@ export default function ArticlesPage() {
                     
                     <div className="p-6 flex-1">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                        <Badge variant="outline">
-                          {categoryLabels[article.category] || article.category}
+                        <Badge variant="secondary">
+                          {getCategoryLabel(article.category)}
                         </Badge>
                         <span>•</span>
                         <span>{formatDate(article.createdAt)}</span>

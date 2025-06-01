@@ -22,6 +22,8 @@ export default function ArticleDetailPage() {
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([])
+  const [scrollY, setScrollY] = useState(0)
+  const [readingProgress, setReadingProgress] = useState(0)
 
   useEffect(() => {
     if (!slug) return
@@ -71,6 +73,21 @@ export default function ArticleDetailPage() {
     fetchArticle()
   }, [slug])
 
+  // 滚动效果
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight
+      const progress = (scrollTop / docHeight) * 100
+      
+      setScrollY(scrollTop)
+      setReadingProgress(Math.min(progress, 100))
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('zh-CN', {
       year: 'numeric',
@@ -80,33 +97,28 @@ export default function ArticleDetailPage() {
   }
 
   const formatContent = (content: string) => {
-    // 简单的 Markdown 渲染（可以后续替换为更强大的 Markdown 解析器）
+    // 简单的段落处理
     return content
-      .replace(/^### (.*$)/gm, '<h3 class="text-xl font-semibold mt-8 mb-4">$1</h3>')
-      .replace(/^## (.*$)/gm, '<h2 class="text-2xl font-semibold mt-8 mb-4">$1</h2>')
-      .replace(/^# (.*$)/gm, '<h1 class="text-3xl font-bold mt-8 mb-4">$1</h1>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/`(.*?)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-sm font-mono">$1</code>')
-      .replace(/```([\s\S]*?)```/g, '<pre class="bg-muted p-4 rounded-lg overflow-x-auto my-4"><code class="font-mono text-sm">$1</code></pre>')
-      .replace(/\n\n/g, '</p><p class="mb-4">')
-      .replace(/\n/g, '<br/>')
+      .split('\n')
+      .filter(line => line.trim())
+      .map((paragraph, index) => `
+        <p class="mb-6 text-lg leading-relaxed ${index === 0 ? 'text-xl font-medium' : ''} animate-fade-in-up" style="animation-delay: ${index * 0.1}s">
+          ${paragraph}
+        </p>
+      `)
+      .join('')
   }
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-muted rounded mb-4"></div>
-            <div className="h-4 bg-muted rounded mb-2"></div>
-            <div className="h-4 bg-muted rounded mb-8"></div>
-            <div className="h-64 bg-muted rounded mb-8"></div>
-            <div className="space-y-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-4 bg-muted rounded"></div>
-              ))}
-            </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse space-y-8 max-w-4xl w-full p-8">
+          <div className="h-12 bg-muted rounded w-3/4 animate-fade-in-up"></div>
+          <div className="h-64 bg-muted rounded animate-scale-in"></div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-4 bg-muted rounded animate-slide-in-left" style={{animationDelay: `${i * 0.1}s`}}></div>
+            ))}
           </div>
         </div>
       </div>
@@ -114,136 +126,178 @@ export default function ArticleDetailPage() {
   }
 
   if (!article) {
-    notFound()
+    return null
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        {/* 返回按钮 */}
-        <div className="mb-6">
-          <Link href="/articles">
-            <Button variant="ghost" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
+    <div className="relative">
+      {/* 阅读进度条 */}
+      <div 
+        className="scroll-progress"
+        style={{ width: `${readingProgress}%` }}
+      />
+
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+        {/* 返回按钮 - 浮动位置 */}
+        <div className="fixed top-24 left-6 z-50">
+          <Button
+            variant="outline"
+            size="sm"
+            className="glassmorphism hover-lift"
+            asChild
+          >
+            <Link href="/articles">
+              <ArrowLeft className="h-4 w-4 mr-2" />
               返回文章列表
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
-        {/* 文章头部 */}
-        <article className="mb-12">
-          <header className="mb-8">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-              <Badge variant="outline">
-                {categoryLabels[article.category] || article.category}
-              </Badge>
-              <span>•</span>
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span>{formatDate(article.createdAt)}</span>
+        <div className="container mx-auto px-4 py-8">
+          <article className="max-w-4xl mx-auto">
+            {/* 文章头部 */}
+            <header className="mb-12 text-center animate-fade-in-up">
+              <div className="mb-6">
+                <Badge variant="secondary" className="mb-4">
+                  {categoryLabels[article.category] || article.category}
+                </Badge>
+                <h1 className="text-5xl font-bold mb-6 gradient-text heading-responsive">
+                  {article.title}
+                </h1>
+                <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto text-responsive">
+                  {article.excerpt}
+                </p>
               </div>
-              <span>•</span>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>{article.readingTime} 分钟阅读</span>
+
+              {/* 文章元信息 */}
+              <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground mb-8 animate-slide-in-left">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span>{article.author}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>{formatDate(article.createdAt)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>{article.readingTime} 分钟阅读</span>
+                </div>
               </div>
-              <span>•</span>
-              <div className="flex items-center gap-1">
-                <User className="h-4 w-4" />
-                <span>{article.author}</span>
+
+              {/* 文章标签 */}
+              {article.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 justify-center mb-8 animate-slide-in-right">
+                  {article.tags.map((tag) => (
+                    <Badge key={tag} variant="outline" className="hover-lift">
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {/* 文章统计 */}
+              <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground border-b pb-8 mb-8 animate-fade-in-up">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  <span>{article.viewCount} 次浏览</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Heart className="h-4 w-4" />
+                  <span>{article.likes} 个赞</span>
+                </div>
               </div>
-            </div>
+            </header>
 
-            <h1 className="text-4xl font-bold mb-4 leading-tight">
-              {article.title}
-            </h1>
-
-            <p className="text-xl text-muted-foreground mb-6">
-              {article.excerpt}
-            </p>
-
-            {article.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                {article.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary">
-                    #{tag}
-                  </Badge>
-                ))}
+            {/* 特色图片 */}
+            {article.featuredImage && (
+              <div 
+                className="relative w-full h-96 mb-12 rounded-2xl overflow-hidden image-overlay animate-scale-in"
+                style={{
+                  transform: `translateY(${scrollY * 0.1}px)`
+                }}
+              >
+                <Image
+                  src={article.featuredImage}
+                  alt={article.title}
+                  fill
+                  className="object-cover transition-transform duration-700 hover:scale-105"
+                  priority
+                />
               </div>
             )}
 
-            {/* 文章统计 */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground border-b pb-6">
-              <div className="flex items-center gap-1">
-                <Eye className="h-4 w-4" />
-                <span>{article.viewCount} 次浏览</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Heart className="h-4 w-4" />
-                <span>{article.likes} 个赞</span>
-              </div>
-            </div>
-          </header>
-
-          {/* 特色图片 */}
-          {article.featuredImage && (
-            <div className="relative w-full h-64 md:h-96 mb-8">
-              <Image
-                src={article.featuredImage}
-                alt={article.title}
-                fill
-                className="object-cover rounded-lg"
-                priority
+            {/* 文章内容 */}
+            <div 
+              className="prose prose-lg max-w-none"
+              style={{
+                transform: `translateY(${scrollY * 0.05}px)`
+              }}
+            >
+              <div 
+                className="text-foreground leading-relaxed"
+                dangerouslySetInnerHTML={{ 
+                  __html: formatContent(article.content)
+                }}
               />
             </div>
-          )}
+          </article>
 
-          {/* 文章内容 */}
-          <div className="prose prose-lg max-w-none">
-            <div 
-              className="text-foreground leading-relaxed"
-              dangerouslySetInnerHTML={{ 
-                __html: `<p class="mb-4">${formatContent(article.content)}</p>` 
+          {/* 相关文章 */}
+          {relatedArticles.length > 0 && (
+            <section 
+              className="mt-20 animate-fade-in-up"
+              style={{
+                transform: `translateY(${scrollY * 0.03}px)`
               }}
-            />
-          </div>
-        </article>
-
-        {/* 相关文章 */}
-        {relatedArticles.length > 0 && (
-          <section className="border-t pt-12">
-            <h2 className="text-2xl font-bold mb-6">相关文章</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {relatedArticles.map((relatedArticle) => (
-                <Card key={relatedArticle.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-4">
-                    <Link href={`/articles/${relatedArticle.slug}`}>
-                      {relatedArticle.featuredImage && (
-                        <div className="relative w-full h-32 mb-3">
-                          <Image
-                            src={relatedArticle.featuredImage}
-                            alt={relatedArticle.title}
-                            fill
-                            className="object-cover rounded"
-                          />
-                        </div>
-                      )}
-                      <h3 className="font-semibold mb-2 line-clamp-2 hover:text-primary transition-colors">
-                        {relatedArticle.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                        {relatedArticle.excerpt}
-                      </p>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDate(relatedArticle.createdAt)}
-                      </div>
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
+            >
+              <div className="max-w-6xl mx-auto">
+                <h2 className="text-3xl font-bold text-center mb-12 gradient-text">
+                  相关文章推荐
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {relatedArticles.map((relatedArticle, index) => (
+                    <Card 
+                      key={relatedArticle.id} 
+                      className="interactive-card hover-lift animate-slide-in-left"
+                      style={{animationDelay: `${index * 0.2}s`}}
+                    >
+                      <CardContent className="p-6">
+                        <Link href={`/articles/${relatedArticle.slug}`} className="block space-y-4">
+                          {relatedArticle.featuredImage && (
+                            <div className="relative w-full h-48 rounded-lg overflow-hidden image-overlay">
+                              <Image
+                                src={relatedArticle.featuredImage}
+                                alt={relatedArticle.title}
+                                fill
+                                className="object-cover transition-transform duration-300 hover:scale-110"
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <Badge variant="secondary" className="mb-2">
+                              {categoryLabels[relatedArticle.category] || relatedArticle.category}
+                            </Badge>
+                            <h3 className="font-semibold text-lg hover:text-primary transition-colors line-clamp-2 mb-2">
+                              {relatedArticle.title}
+                            </h3>
+                            <p className="text-muted-foreground text-sm line-clamp-3">
+                              {relatedArticle.excerpt}
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            <span>{relatedArticle.readingTime}分钟阅读</span>
+                            <span>{formatDate(relatedArticle.createdAt)}</span>
+                          </div>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   )

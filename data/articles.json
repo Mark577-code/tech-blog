@@ -6,7 +6,13 @@
     "content": "# Next.js 15 + TypeScript 博客系统开发指南\n\n在现代Web开发中，构建一个功能完整的博客系统是一个很好的实践项目。本文将详细介绍如何使用 Next.js 15 和 TypeScript 构建一个现代化的博客系统。\n\n## 技术栈选择\n\n我们选择以下技术栈：\n\n- **Next.js 15**: React 全栈框架，提供SSR、SSG等功能\n- **TypeScript**: 类型安全的JavaScript超集\n- **Tailwind CSS**: 实用优先的CSS框架\n- **Radix UI**: 无样式、可访问的组件库\n\n## 项目初始化\n\n首先创建新的Next.js项目：\n\n```bash\nnpx create-next-app@latest my-blog --typescript --tailwind --app\ncd my-blog\nnpm install\n```\n\n## 核心功能实现\n\n### 1. 文章管理系统\n\n我们需要实现一个完整的文章CRUD系统，包括：\n\n- 文章创建和编辑\n- 分类和标签管理\n- 发布状态控制\n- 搜索和筛选功能\n\n### 2. 用户认证\n\n使用JWT实现简单的管理员认证：\n\n```typescript\nexport interface AuthUser {\n  id: string\n  username: string\n  role: 'admin'\n}\n```\n\n### 3. 响应式设计\n\n使用Tailwind CSS确保在各种设备上的良好显示效果。\n\n## 性能优化\n\n- 使用Next.js Image组件优化图片加载\n- 实现代码分割和懒加载\n- 添加适当的缓存策略\n\n## 部署建议\n\n推荐使用Vercel进行部署，配置简单且性能优秀。\n\n## 总结\n\n通过本指南，你应该能够构建一个功能完整的博客系统。这个项目涵盖了现代Web开发的许多重要概念，是学习全栈开发的绝佳实践项目。",
     "excerpt": "详细介绍如何使用 Next.js 15 和 TypeScript 构建一个功能完整的现代化博客系统，包括文章管理、用户认证、响应式设计等核心功能。",
     "category": "programming",
-    "tags": ["Next.js", "TypeScript", "React", "Web开发", "全栈开发"],
+    "tags": [
+      "Next.js",
+      "TypeScript",
+      "React",
+      "Web开发",
+      "全栈开发"
+    ],
     "status": "published",
     "createdAt": "2025-05-30T13:43:44.492Z",
     "updatedAt": "2025-05-30T13:43:57.380Z",
@@ -23,7 +29,12 @@
     "content": "# 现代前端开发最佳实践\n\n前端开发生态系统正在快速发展，新的工具和技术层出不穷。本文总结了2024年前端开发的最佳实践。\n\n## 开发工具\n\n### 构建工具\n\n- **Vite**: 极速的构建工具\n- **Webpack**: 成熟的模块打包器\n- **esbuild**: 极快的JavaScript打包器\n\n### 代码质量\n\n使用ESLint和Prettier确保代码质量：\n\n```json\n{\n  \"extends\": [\"next/core-web-vitals\", \"@typescript-eslint/recommended\"],\n  \"rules\": {\n    \"@typescript-eslint/no-unused-vars\": \"error\"\n  }\n}\n```\n\n## 性能优化策略\n\n1. **代码分割**: 使用动态导入减少初始包大小\n2. **图片优化**: 使用WebP格式和响应式图片\n3. **缓存策略**: 合理配置浏览器缓存\n\n## 可访问性\n\n确保应用对所有用户都可访问：\n\n- 语义化HTML标签\n- 适当的ARIA属性\n- 键盘导航支持\n\n## 结论\n\n遵循这些最佳实践可以帮助你构建高质量、可维护的前端应用。",
     "excerpt": "总结2024年现代前端开发的最佳实践，包括开发工具选择、代码质量保证、性能优化和可访问性等重要主题。",
     "category": "programming",
-    "tags": ["前端开发", "最佳实践", "性能优化", "可访问性"],
+    "tags": [
+      "前端开发",
+      "最佳实践",
+      "性能优化",
+      "可访问性"
+    ],
     "status": "published",
     "createdAt": "2025-05-29T10:30:00.000Z",
     "updatedAt": "2025-05-29T10:30:00.000Z",
@@ -40,7 +51,12 @@
     "content": "# 摄影基础入门指南\n\n摄影是一门艺术，也是一门技术。本文将为初学者介绍摄影的基础知识和技巧。\n\n## 相机基础\n\n### 光圈、快门、ISO\n\n摄影的三要素：\n\n- **光圈(Aperture)**: 控制景深和进光量\n- **快门(Shutter Speed)**: 控制曝光时间和动态模糊\n- **ISO**: 控制感光度和画质\n\n### 构图技巧\n\n1. **三分法则**: 将画面分为九等份\n2. **引导线**: 利用线条引导视线\n3. **对称构图**: 创造平衡感\n\n## 光线的运用\n\n光线是摄影的灵魂：\n\n- 黄金时间拍摄\n- 逆光与顺光的运用\n- 软光与硬光的特点\n\n## 后期处理\n\n适度的后期处理可以提升照片质量：\n\n- 基础调色\n- 曝光校正\n- 锐化处理\n\n## 实践建议\n\n多拍多练，从模仿开始，逐步形成自己的风格。",
     "excerpt": "为摄影初学者介绍基础知识，包括相机操作、构图技巧、光线运用和后期处理等核心内容。",
     "category": "photography",
-    "tags": ["摄影", "入门教程", "构图", "光线"],
+    "tags": [
+      "摄影",
+      "入门教程",
+      "构图",
+      "光线"
+    ],
     "status": "published",
     "createdAt": "2025-05-28T09:00:00.000Z",
     "updatedAt": "2025-05-28T09:00:00.000Z",
@@ -57,7 +73,12 @@
     "content": "# React 18 新特性详解\n\nReact 18 带来了许多令人兴奋的新特性，本文将详细介绍这些改进。\n\n## 并发特性\n\n### Automatic Batching\n\nReact 18 默认启用自动批处理，提升性能：\n\n```jsx\nfunction App() {\n  const [count, setCount] = useState(0);\n  const [flag, setFlag] = useState(false);\n\n  function handleClick() {\n    setCount(c => c + 1); // 不会立即重新渲染\n    setFlag(f => !f); // 不会立即重新渲染\n    // React 会批处理这些更新！\n  }\n}\n```\n\n### Suspense 改进\n\n新的 Suspense 支持：\n\n- 服务端渲染\n- 数据获取\n- 代码分割\n\n## Strict Mode 变化\n\n开发模式下会故意双重调用：\n\n- Effects\n- State updaters\n- 初始化函数\n\n这有助于发现副作用问题。\n\n## 新的 Hooks\n\n### useId\n\n```jsx\nfunction Checkbox() {\n  const id = useId();\n  return (\n    <>\n      <label htmlFor={id}>Do you like React?</label>\n      <input id={id} type=\"checkbox\" name=\"react\"/>\n    </>\n  );\n}\n```\n\n### useDeferredValue\n\n延迟更新非紧急状态：\n\n```jsx\nconst deferredQuery = useDeferredValue(query);\n```\n\n## 升级建议\n\n从 React 17 升级到 18 的步骤和注意事项。",
     "excerpt": "深入解析 React 18 的新特性，包括并发渲染、自动批处理、新的 Hooks 和 Suspense 改进等重要内容。",
     "category": "tutorial",
-    "tags": ["React", "JavaScript", "前端框架", "教程"],
+    "tags": [
+      "React",
+      "JavaScript",
+      "前端框架",
+      "教程"
+    ],
     "status": "published",
     "createdAt": "2025-05-27T14:20:00.000Z",
     "updatedAt": "2025-05-27T14:20:00.000Z",
@@ -74,7 +95,12 @@
     "content": "# 个人作品集网站设计案例\n\n本文分享一个完整的个人作品集网站设计和开发过程。\n\n## 设计理念\n\n### 简约而不简单\n\n- 清晰的信息层级\n- 舒适的视觉体验\n- 突出作品展示\n\n### 响应式设计\n\n确保在各种设备上都有良好的显示效果：\n\n- 桌面端优化\n- 移动端适配\n- 平板设备兼容\n\n## 技术实现\n\n### 前端技术栈\n\n- **框架**: Next.js + React\n- **样式**: Tailwind CSS\n- **动画**: Framer Motion\n- **优化**: 图片懒加载、代码分割\n\n### 核心功能\n\n1. **作品展示区**\n   - 网格布局\n   - 悬停效果\n   - 详情页面\n\n2. **关于我页面**\n   - 个人介绍\n   - 技能展示\n   - 经历时间线\n\n3. **联系表单**\n   - 表单验证\n   - 邮件发送\n   - 成功反馈\n\n## 性能优化\n\n- 图片压缩和格式选择\n- 关键路径CSS内联\n- 预加载重要资源\n\n## 部署和维护\n\n使用 Vercel 进行自动部署，配置域名和SSL证书。\n\n## 总结\n\n一个好的作品集网站不仅要展示技术能力，更要体现设计思维和用户体验意识。",
     "excerpt": "分享个人作品集网站的完整设计开发过程，从设计理念到技术实现，再到性能优化的全方位案例分析。",
     "category": "project",
-    "tags": ["作品集", "网站设计", "用户体验", "前端开发"],
+    "tags": [
+      "作品集",
+      "网站设计",
+      "用户体验",
+      "前端开发"
+    ],
     "status": "published",
     "createdAt": "2025-05-26T11:15:00.000Z",
     "updatedAt": "2025-05-26T11:15:00.000Z",
@@ -91,12 +117,17 @@
     "content": "# 街拍摄影技巧与心得\n\n街拍是记录城市生活和人文风貌的重要摄影形式，本文分享一些实用的街拍技巧。\n\n## 器材选择\n\n### 相机推荐\n\n- **微单相机**: 体积小巧，便于携带\n- **定焦镜头**: 35mm或50mm最为实用\n- **快速对焦**: 抓住瞬间很重要\n\n### 拍摄设置\n\n- 光圈优先模式\n- 较高的ISO设置\n- 连续对焦模式\n\n## 构图技巧\n\n### 寻找故事性\n\n- 观察人物表情和动作\n- 捕捉有趣的瞬间\n- 寻找环境与人物的关系\n\n### 利用环境元素\n\n- 建筑结构作为框架\n- 光影变化增强氛围\n- 反射面创造有趣效果\n\n## 拍摄伦理\n\n### 尊重他人隐私\n\n- 远距离拍摄\n- 避免过于侵犯性的角度\n- 必要时征得同意\n\n### 后期处理原则\n\n- 保持真实性\n- 适度调整对比度\n- 保护被摄者隐私\n\n## 实践建议\n\n多走多看多拍，培养敏锐的观察力和快速反应能力。\n\n## 作品分享\n\n定期整理和分享自己的街拍作品，从反馈中学习进步。",
     "excerpt": "分享街头摄影的实用技巧，包括器材选择、构图方法、拍摄伦理和后期处理等方面的经验总结。",
     "category": "photography",
-    "tags": ["街拍", "摄影技巧", "人文摄影", "城市"],
+    "tags": [
+      "街拍",
+      "摄影技巧",
+      "人文摄影",
+      "城市"
+    ],
     "status": "published",
     "createdAt": "2025-05-25T16:30:00.000Z",
     "updatedAt": "2025-05-25T16:30:00.000Z",
     "author": "admin",
-    "featuredImage": "https://images.unsplash.com/photo-1525876287651-04c4f1de5492?w=800&h=400&fit=crop",
+    "featuredImage": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=400&fit=crop",
     "readingTime": 5,
     "viewCount": 198,
     "likes": 24

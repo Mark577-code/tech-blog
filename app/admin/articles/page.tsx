@@ -8,15 +8,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Plus, Pencil, Trash, X, Eye } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { ImageUpload } from "@/components/ui/image-upload"
 import { toast } from "sonner"
 import type { Article, CreateArticleData } from "@/types/article"
-
-const categories = [
-  { value: "programming", label: "编程技术" },
-  { value: "photography", label: "摄影分享" },
-  { value: "tutorial", label: "文字教程" },
-  { value: "project", label: "项目展示" },
-]
+import type { Category } from "@/types/category"
 
 interface ArticleFormData {
   title: string
@@ -32,7 +27,7 @@ const defaultFormData: ArticleFormData = {
   title: "",
   content: "",
   excerpt: "",
-  category: "programming",
+  category: "",
   tags: [],
   status: "draft",
   featuredImage: ""
@@ -40,11 +35,28 @@ const defaultFormData: ArticleFormData = {
 
 export default function ArticlesManagement() {
   const [articles, setArticles] = useState<Article[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState<ArticleFormData>(defaultFormData)
   const [tagInput, setTagInput] = useState("")
+
+  // 获取分类列表
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories?isVisible=true&sortBy=order&sortOrder=asc')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setCategories(data.data.categories)
+        }
+      }
+    } catch (error) {
+      console.error('获取分类失败:', error)
+      toast.error('获取分类失败')
+    }
+  }
 
   // 获取文章列表
   const fetchArticles = async () => {
@@ -66,8 +78,30 @@ export default function ArticlesManagement() {
   }
 
   useEffect(() => {
+    fetchCategories()
     fetchArticles()
   }, [])
+
+  // 初始化默认分类 - 在分类加载后设置
+  useEffect(() => {
+    const firstCategory = categories[0]
+    if (categories.length > 0 && !formData.category && firstCategory) {
+      setFormData(prev => ({ ...prev, category: firstCategory.slug }))
+    }
+  }, [categories, formData.category])
+
+  // 重置默认分类
+  const resetDefaultCategory = () => {
+    const firstCategory = categories[0]
+    if (categories.length > 0 && firstCategory) {
+      setFormData({ 
+        ...defaultFormData, 
+        category: firstCategory.slug 
+      })
+    } else {
+      setFormData(defaultFormData)
+    }
+  }
 
   // 保存文章
   const handleSave = async () => {
@@ -209,13 +243,19 @@ export default function ArticlesManagement() {
     })
   }
 
+  // 获取分类显示名称
+  const getCategoryLabel = (slug: string): string => {
+    const category = categories.find(cat => cat.slug === slug)
+    return category ? category.name : slug
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">文章管理</h1>
         <Button
           onClick={() => {
-            setFormData(defaultFormData)
+            resetDefaultCategory()
             setEditingId(null)
             setIsEditing(true)
           }}
@@ -266,21 +306,34 @@ export default function ArticlesManagement() {
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
-                      <SelectItem key={category.value} value={category.value}>
-                        {category.label}
+                      <SelectItem key={category.id} value={category.slug}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          {category.name}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {categories.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    暂无可用分类，请先 
+                    <a href="/admin/categories" className="text-primary hover:underline">
+                      创建分类
+                    </a>
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">特色图片URL</label>
-              <Input
-                placeholder="https://example.com/image.jpg"
+              <label className="text-sm font-medium">特色图片</label>
+              <ImageUpload
                 value={formData.featuredImage}
-                onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, featuredImage: value })}
               />
             </div>
 
@@ -354,7 +407,7 @@ export default function ArticlesManagement() {
                 onClick={() => {
                   setIsEditing(false)
                   setEditingId(null)
-                  setFormData(defaultFormData)
+                  resetDefaultCategory()
                 }}
               >
                 取消
@@ -383,7 +436,7 @@ export default function ArticlesManagement() {
                         <Badge variant={article.status === 'published' ? 'default' : 'secondary'}>
                           {article.status === 'published' ? '已发布' : '草稿'}
                         </Badge>
-                        <span>{categories.find((c) => c.value === article.category)?.label}</span>
+                        <span>{getCategoryLabel(article.category)}</span>
                         <span>{formatDate(article.createdAt)}</span>
                         <span>{article.readingTime}分钟阅读</span>
                       </div>

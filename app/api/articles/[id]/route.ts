@@ -5,10 +5,11 @@ import type { UpdateArticleData, ApiResponse } from '@/types/article'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const article = await getArticleById(params.id)
+    const { id } = await params
+    const article = await getArticleById(id)
     
     if (!article) {
       return NextResponse.json({
@@ -33,7 +34,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证管理员权限
@@ -45,10 +46,11 @@ export async function PUT(
       } as ApiResponse, { status: 401 })
     }
     
+    const { id } = await params
     const body: UpdateArticleData = await request.json()
     
     // 确保ID匹配
-    if (body.id !== params.id) {
+    if (body.id !== id) {
       return NextResponse.json({
         success: false,
         error: 'ID不匹配'
@@ -81,7 +83,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证管理员权限
@@ -93,7 +95,8 @@ export async function DELETE(
       } as ApiResponse, { status: 401 })
     }
     
-    const success = await deleteArticle(params.id)
+    const { id } = await params
+    const success = await deleteArticle(id)
     
     if (!success) {
       return NextResponse.json({

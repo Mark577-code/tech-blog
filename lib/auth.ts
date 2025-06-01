@@ -40,13 +40,19 @@ export function verifyToken(token: string): User | null {
       return null
     }
     
-    return {
+    const user: User = {
       id: decoded.id,
       username: decoded.username,
-      email: ADMIN_USER.email,
       role: decoded.role,
       createdAt: ADMIN_USER.createdAt
     }
+
+    // 只在email有值时才添加
+    if (ADMIN_USER.email) {
+      user.email = ADMIN_USER.email
+    }
+    
+    return user
   } catch (error) {
     console.error('JWT验证失败:', error)
     return null

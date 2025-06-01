@@ -28,7 +28,6 @@
     "noImplicitThis": true,
     "useUnknownInCatchVariables": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
     
     // 代码质量
     "forceConsistentCasingInFileNames": true,

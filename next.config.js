@@ -30,6 +30,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8088',
+        pathname: '/**',
+      },
     ],
     // 图片优化配置
     formats: ['image/webp', 'image/avif'],
@@ -40,7 +46,6 @@ const nextConfig = {
   },
   // 优化中国区域的访问速度
   experimental: {
-    optimizeCss: true,
     scrollRestoration: true,
   },
   // CDN配置 - 仅在生产环境启用
@@ -50,6 +55,24 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   
+  // 开发环境跨域配置 - 修复跨域请求问题
+  ...(process.env.NODE_ENV === 'development' && {
+    allowedDevOrigins: [
+      '10.202.47.139:3000',
+      '10.202.47.139:3001', 
+      '10.202.47.139:3002',
+      '192.168.189.1:3000',
+      '192.168.189.1:3001',
+      '192.168.189.1:3002',
+      'localhost:3000',
+      'localhost:3001',
+      'localhost:3002',
+      '127.0.0.1:3000',
+      '127.0.0.1:3001',
+      '127.0.0.1:3002',
+    ],
+  }),
+  
   // 安全头配置
   async headers() {
     return [
@@ -58,7 +81,7 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'SAMEORIGIN' // 改为SAMEORIGIN，允许同源frame
           },
           {
             key: 'X-Content-Type-Options',
@@ -85,11 +108,6 @@ const nextConfig = {
   devIndicators: {
     position: 'bottom-right',
   },
-  
-  // 跨域请求配置
-  ...(process.env.NODE_ENV === 'development' && {
-    allowedDevOrigins: ['172.24.32.1:3000', '172.24.32.1:3001', '172.24.32.1:3002'],
-  }),
   
   // 生产优化
   ...(process.env.NODE_ENV === 'production' && {
