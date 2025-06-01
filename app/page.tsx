@@ -89,6 +89,8 @@ export default function Home() {
       }, 5000)
       return () => clearInterval(interval)
     }
+    // 添加返回值以确保所有代码路径都有返回值
+    return () => {}
   }, [featuredImages.length])
 
   const nextSlide = (): void => {
