@@ -143,7 +143,7 @@ export function useLive2DStore() {
     clearConversationHistory: () => dispatch({ type: 'CLEAR_CONVERSATION_HISTORY' }),
     switchModel: (modelId: string) => dispatch({ type: 'SWITCH_MODEL', payload: modelId }),
     showMessage: (text: string, emotion?: EmotionState, duration = 3000) => {
-      dispatch({ type: 'SHOW_MESSAGE', payload: { text, emotion, duration } })
+      dispatch({ type: 'SHOW_MESSAGE', payload: { text, ...(emotion && { emotion }), duration } })
       
       // 自动隐藏消息
       if (duration > 0) {
