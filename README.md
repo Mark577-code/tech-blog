@@ -272,7 +272,7 @@ export const metadata = {
 如果遇到问题，请通过以下方式反馈：
 
 1. [GitHub Issues](https://github.com/your-username/tech-blog/issues)
-2. 邮箱: your-email@example.com
+2. 邮箱: 3449322892@qq.com
 
 ## 📄 许可证
 
@@ -290,4 +290,4 @@ export const metadata = {
 
 ⭐ 如果这个项目对你有帮助，请给个Star支持一下！
 
-📧 联系方式: [your-email@example.com](mailto:your-email@example.com) 
+📧 联系方式: [3449322892@qq.com]
