@@ -3,10 +3,9 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/contexts/theme-context"
 import { LanguageProvider } from "@/contexts/language-context"
 import Navbar from "./components/Navbar"
-import Sidebar from "./components/Sidebar"
+
 import ParticleBackground from "./components/ParticleBackground"
 import Live2D from "./components/Live2D"
-import ChatWidget from "./components/Chat/ChatWidget"
 import { Toaster } from "sonner"
 import type { Metadata } from 'next'
 
@@ -14,17 +13,17 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: {
-    default: "现代化技术博客 | Tech Blog",
-    template: "%s | Tech Blog"
+    default: "Mark-李的博客 | 技术分享与编程经验",
+    template: "%s | Mark-李的博客"
   },
-  description: "一个基于Next.js 15构建的现代化个人技术博客，分享编程经验、技术文章、项目作品和摄影作品。集成AI助手、Live2D虚拟角色等特色功能。",
+  description: "Mark-李的个人技术博客，基于Next.js 15构建。分享前端开发、后端技术、编程经验、项目作品和生活感悟。专注于React、TypeScript、Node.js等现代Web技术栈。",
   keywords: [
-    "技术博客", "前端开发", "Next.js", "React", "TypeScript", 
-    "编程", "Web开发", "个人博客", "作品集", "摄影"
+    "Mark-李", "技术博客", "前端开发", "Next.js", "React", "TypeScript", 
+    "编程", "Web开发", "个人博客", "作品集", "摄影", "全栈开发"
   ],
-  authors: [{ name: "Tech Blog Author" }],
-  creator: "Tech Blog Author",
-  publisher: "Tech Blog",
+  authors: [{ name: "Mark-李" }],
+  creator: "Mark-李",
+  publisher: "Mark-李的博客",
   robots: {
     index: true,
     follow: true,
@@ -40,22 +39,22 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'zh_CN',
     url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    title: '现代化技术博客',
-    description: '分享编程经验、技术文章、项目作品和摄影作品的个人技术博客',
-    siteName: 'Tech Blog',
+    title: 'Mark-李的博客',
+    description: 'Mark-李的个人技术博客，分享编程经验、技术文章、项目作品和生活感悟',
+    siteName: 'Mark-李的博客',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Tech Blog - 现代化技术博客',
+        alt: 'Mark-李的博客 - 技术分享与编程经验',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '现代化技术博客',
-    description: '分享编程经验、技术文章、项目作品和摄影作品',
+    title: 'Mark-李的博客',
+    description: 'Mark-李的个人技术博客，分享编程经验、技术文章、项目作品和生活感悟',
     images: ['/og-image.jpg'],
     creator: '@your_twitter_handle',
   },
@@ -71,7 +70,7 @@ export const metadata: Metadata = {
   },
   category: 'technology',
   generator: 'Next.js',
-  applicationName: 'Tech Blog',
+  applicationName: 'Mark-李的博客',
   referrer: 'origin-when-cross-origin',
   formatDetection: {
     email: false,
@@ -108,7 +107,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Tech Blog" />
+        <meta name="apple-mobile-web-app-title" content="Mark-李的博客" />
         
         {/* 结构化数据 */}
         <script
@@ -117,16 +116,16 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Blog",
-              "name": "现代化技术博客",
-              "description": "分享编程经验、技术文章、项目作品和摄影作品的个人技术博客",
+              "name": "Mark-李的博客",
+              "description": "Mark-李的个人技术博客，分享编程经验、技术文章、项目作品和生活感悟",
               "url": process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
               "author": {
                 "@type": "Person",
-                "name": "Tech Blog Author"
+                "name": "Mark-李"
               },
               "publisher": {
                 "@type": "Organization",
-                "name": "Tech Blog",
+                "name": "Mark-李的博客",
                 "logo": {
                   "@type": "ImageObject",
                   "url": "/logo.png"
@@ -142,15 +141,11 @@ export default function RootLayout({
             <ParticleBackground />
             <div className="min-h-screen">
               <Navbar />
-              <div className="flex flex-col md:flex-row">
-                <Sidebar />
-                <main className="flex-1 p-4 md:ml-64 mt-16">
-                  <div className="gradient-window p-6">{children}</div>
-                </main>
-              </div>
+              <main className="main-content pt-16 relative">
+                {children}
+              </main>
             </div>
             <Live2D />
-            <ChatWidget />
             <Toaster
               position="top-right"
               expand={false}

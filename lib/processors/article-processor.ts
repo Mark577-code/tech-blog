@@ -41,7 +41,7 @@ ${article.content}
 ${article.tags.map(tag => `#${tag}`).join(' ')}
 
 ---
-*本文档来自技术博客系统，供AI助手参考回答相关问题*
+*本文档来自技术博客系统*
     `.trim()
     
     return {

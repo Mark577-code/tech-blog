@@ -1,86 +1,89 @@
-import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth'
-import { getAllArticles, createArticle } from '@/lib/articles'
-import type { CreateArticleData, ApiResponse, ArticleFilters } from '@/types/article'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(request: Request) {
+// 从JSON文件读取文章数据
+import articlesData from '@/data/articles.json'
+
+// 模拟文章数据
+const mockArticles = articlesData
+
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     
-    const filters: ArticleFilters = {
-      status: (searchParams.get('status') as 'draft' | 'published' | 'all') || 'all',
-      category: searchParams.get('category') || '',
-      search: searchParams.get('search') || '',
-      page: parseInt(searchParams.get('page') || '1'),
-      limit: parseInt(searchParams.get('limit') || '10'),
-      sortBy: (searchParams.get('sortBy') as any) || 'createdAt',
-      sortOrder: (searchParams.get('sortOrder') as any) || 'desc'
-    }
-    
-    // 处理标签参数
-    const tagsParam = searchParams.get('tags')
-    if (tagsParam) {
-      filters.tags = tagsParam.split(',').filter(Boolean)
-    }
-    
-    // 清理空值
-    if (!filters.category) {
-      delete filters.category
-    }
-    if (!filters.search) {
-      delete filters.search
-    }
-    
-    const result = await getAllArticles(filters)
-    
-    return NextResponse.json({
-      success: true,
-      data: result
-    } as ApiResponse)
-    
-  } catch (error) {
-    console.error('获取文章列表错误:', error)
-    return NextResponse.json({
-      success: false,
-      error: '获取文章列表失败'
-    } as ApiResponse, { status: 500 })
-  }
-}
+    // 获取查询参数
+    const status = searchParams.get('status') || 'published'
+    const limit = parseInt(searchParams.get('limit') || '10')
+    const page = parseInt(searchParams.get('page') || '1')
+    const sortBy = searchParams.get('sortBy') || 'createdAt'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
+    const category = searchParams.get('category')
+    const search = searchParams.get('search')
 
-export async function POST(request: Request) {
-  try {
-    // 验证管理员权限
-    const user = await requireAdmin()
-    if (!user) {
-      return NextResponse.json({
-        success: false,
-        error: '需要管理员权限'
-      } as ApiResponse, { status: 401 })
+    // 过滤文章
+    let filteredArticles = mockArticles.filter(article => 
+      article.status === status
+    )
+
+    // 按分类过滤
+    if (category) {
+      filteredArticles = filteredArticles.filter(article => 
+        article.category === category
+      )
     }
-    
-    const body: CreateArticleData = await request.json()
-    
-    // 验证必要字段
-    if (!body.title || !body.content || !body.category) {
-      return NextResponse.json({
-        success: false,
-        error: '标题、内容和分类不能为空'
-      } as ApiResponse, { status: 400 })
+
+    // 按搜索关键词过滤
+    if (search) {
+      const searchLower = search.toLowerCase()
+      filteredArticles = filteredArticles.filter(article =>
+        article.title.toLowerCase().includes(searchLower) ||
+        article.excerpt.toLowerCase().includes(searchLower) ||
+        article.tags.some(tag => tag.toLowerCase().includes(searchLower))
+      )
     }
-    
-    const article = await createArticle(body, user.username)
-    
+
+    // 排序
+    filteredArticles.sort((a, b) => {
+      const aValue = a[sortBy as keyof typeof a]
+      const bValue = b[sortBy as keyof typeof b]
+      
+      if (sortOrder === 'desc') {
+        return aValue > bValue ? -1 : 1
+      } else {
+        return aValue < bValue ? -1 : 1
+      }
+    })
+
+    // 分页
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    const paginatedArticles = filteredArticles.slice(startIndex, endIndex)
+
+    // 计算总页数
+    const totalPages = Math.ceil(filteredArticles.length / limit)
+
     return NextResponse.json({
       success: true,
-      data: article,
-      message: '文章创建成功'
-    } as ApiResponse, { status: 201 })
-    
+      data: {
+        articles: paginatedArticles,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalCount: filteredArticles.length,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      }
+    })
+
   } catch (error) {
-    console.error('创建文章错误:', error)
-    return NextResponse.json({
-      success: false,
-      error: '创建文章失败'
-    } as ApiResponse, { status: 500 })
+    console.error('获取文章列表失败:', error)
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: '获取文章列表失败',
+        message: error instanceof Error ? error.message : '未知错误'
+      },
+      { status: 500 }
+    )
   }
 } 

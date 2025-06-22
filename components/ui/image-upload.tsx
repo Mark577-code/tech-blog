@@ -122,6 +122,7 @@ export function ImageUpload({
                   src={value}
                   alt="预览图片"
                   fill
+                  sizes="(max-width: 768px) 100vw, 400px"
                   className="object-cover"
                   onError={() => {
                     toast.error('图片加载失败')

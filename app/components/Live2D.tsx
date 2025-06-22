@@ -29,35 +29,91 @@ const Live2D = () => {
     const initWidget = () => {
       if (window.L2Dwidget) {
         try {
+          // 查找Live2D容器
+          const container = document.getElementById('live2d-container')
+          if (!container) {
+            console.warn('Live2D container not found')
+            return
+          }
+
           window.L2Dwidget.init({
             model: {
               jsonPath:
                 "https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget-models@latest/assets/z16.model.json",
-              scale: isMobile ? 0.5 : 1,
+              scale: 0.7,
             },
             display: {
-              position: "right",
-              width: isMobile ? 100 : 150,
-              height: isMobile ? 200 : 300,
-              hOffset: 20,
-              vOffset: isMobile ? 100 : 50,
+              superSample: 2,
+              width: 112,
+              height: 112,
+              position: "fixed",
+              hOffset: 0,
+              vOffset: 0,
             },
             mobile: {
               show: true,
-              scale: 0.5,
+              scale: 0.7,
             },
             react: {
-              opacityDefault: 0.7,
-              opacityOnHover: 0.9,
+              opacityDefault: 0.8,
+              opacityOnHover: 1.0,
             },
             dialog: {
               enable: true,
               script: {
-                "tap body": "我是Live2D看板娘，点击右下角的蓝色按钮可以和AI助手聊天哦！",
-                "tap face": "想要聊天的话，请使用页面右下角的AI助手～",
+                "tap body": "我是Live2D看板娘，欢迎来到这个技术博客！",
+                "tap face": "很高兴见到你～ 希望你在这里能学到有用的知识！",
+                "tap idle": "你要干嘛呀？",
               },
             },
           })
+
+          // 等待Live2D加载完成后，将其移动到指定容器
+          setTimeout(() => {
+            const canvas = document.querySelector('#L2Dwidget')
+            if (canvas && container) {
+              console.log('Moving Live2D to container...')
+              // 清空容器
+              container.innerHTML = ''
+              // 移动canvas到容器内
+              container.appendChild(canvas)
+              // 调整样式，确保最高z-index
+              const canvasElement = canvas as HTMLElement
+              canvasElement.style.position = 'relative'
+              canvasElement.style.left = '0'
+              canvasElement.style.top = '0'
+              canvasElement.style.transform = 'none'
+              canvasElement.style.width = '112px'
+              canvasElement.style.height = '112px'
+              canvasElement.style.zIndex = '999999' // 进一步提高z-index
+              canvasElement.style.pointerEvents = 'auto'
+              canvasElement.style.display = 'block'
+              canvasElement.style.visibility = 'visible'
+              // 确保容器也有正确的z-index
+              container.style.zIndex = '999999'
+              container.style.position = 'relative'
+              // 确保父容器不遮挡
+              const parentCard = container.closest('.fixed')
+              if (parentCard) {
+                (parentCard as HTMLElement).style.zIndex = '100000'
+              }
+              
+              // 确保Live2D对话框样式正确
+              setTimeout(() => {
+                const messageElements = document.querySelectorAll('.message-wrap, .tip-wrap, #waifu-message, #waifu-tool')
+                messageElements.forEach(el => {
+                  const element = el as HTMLElement
+                  element.style.zIndex = '999999'
+                  element.style.position = 'fixed'
+                })
+              }, 2000)
+              
+              console.log('Live2D moved successfully, z-index:', canvasElement.style.zIndex)
+            } else {
+              console.warn('Live2D canvas or container not found')
+            }
+          }, 1000)
+
         } catch (error) {
           console.error("Failed to initialize Live2D:", error)
         }

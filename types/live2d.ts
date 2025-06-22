@@ -8,7 +8,6 @@ export interface Live2DState {
   currentDialogue: string | null
   isControlPanelVisible: boolean
   userPreferences: UserPreferences
-  conversationHistory: ConversationMessage[]
 }
 
 export interface ModelConfig {
@@ -25,20 +24,10 @@ export interface ModelConfig {
 }
 
 export interface UserPreferences {
-  conversationStyle: 'casual' | 'formal' | 'friendly' | 'professional'
   interactionFrequency: 'low' | 'medium' | 'high'
   enableVoice: boolean
   enableMotions: boolean
-  preferredTopics: string[]
   language: 'zh' | 'en' | 'ja'
-}
-
-export interface ConversationMessage {
-  id: string
-  type: 'user' | 'assistant'
-  content: string
-  timestamp: number
-  emotion?: EmotionState
 }
 
 export type EmotionState = 

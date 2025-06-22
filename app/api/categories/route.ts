@@ -1,82 +1,118 @@
-import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth'
-import { getCategories, createCategory } from '@/lib/categories'
-import type { CreateCategoryData, CategoryFilter } from '@/types/category'
-import type { ApiResponse } from '@/types/article'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(request: Request) {
-  try {
-    const url = new URL(request.url)
-    const isVisible = url.searchParams.get('isVisible')
-    const limit = url.searchParams.get('limit')
-    const sortBy = url.searchParams.get('sortBy') as 'order' | 'name' | 'createdAt' | 'updatedAt'
-    const sortOrder = url.searchParams.get('sortOrder') as 'asc' | 'desc'
-
-    const filter: CategoryFilter = {}
-    if (isVisible !== null) {
-      filter.isVisible = isVisible === 'true'
-    }
-    if (limit) {
-      filter.limit = parseInt(limit)
-    }
-    if (sortBy) {
-      filter.sortBy = sortBy
-    }
-    if (sortOrder) {
-      filter.sortOrder = sortOrder
-    }
-
-    const result = await getCategories(filter)
-    
-    return NextResponse.json({
-      success: true,
-      data: result
-    } as ApiResponse)
-    
-  } catch (error) {
-    console.error('获取分类错误:', error)
-    return NextResponse.json({
-      success: false,
-      error: '获取分类失败'
-    } as ApiResponse, { status: 500 })
+// 模拟分类数据
+const mockCategories = [
+  {
+    id: '1',
+    name: '编程技术',
+    slug: 'programming',
+    description: '编程语言、框架和开发技术相关内容',
+    color: '#3b82f6',
+    isVisible: true,
+    order: 1,
+    articleCount: 3,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: '2',
+    name: '前端开发',
+    slug: 'frontend',
+    description: '前端技术、框架、工具和最佳实践',
+    color: '#10b981',
+    isVisible: true,
+    order: 2,
+    articleCount: 1,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: '3',
+    name: '摄影分享',
+    slug: 'photography',
+    description: '摄影技巧、作品分享和后期处理',
+    color: '#f59e0b',
+    isVisible: true,
+    order: 3,
+    articleCount: 2,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: '4',
+    name: '项目展示',
+    slug: 'projects',
+    description: '个人项目和作品集展示',
+    color: '#8b5cf6',
+    isVisible: true,
+    order: 4,
+    articleCount: 1,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: '5',
+    name: 'tutorial',
+    slug: 'tutorial',
+    description: '技术教程和学习指南',
+    color: '#ef4444',
+    isVisible: true,
+    order: 5,
+    articleCount: 1,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z'
   }
-}
+]
 
-export async function POST(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    // 验证管理员权限
-    const user = await requireAdmin()
-    if (!user) {
-      return NextResponse.json({
-        success: false,
-        error: '需要管理员权限'
-      } as ApiResponse, { status: 401 })
+    const { searchParams } = new URL(request.url)
+    
+    // 获取查询参数
+    const isVisible = searchParams.get('isVisible')
+    const sortBy = searchParams.get('sortBy') || 'order'
+    const sortOrder = searchParams.get('sortOrder') || 'asc'
+
+    // 过滤分类
+    let filteredCategories = mockCategories
+
+    // 按可见性过滤
+    if (isVisible !== null) {
+      const isVisibleBool = isVisible === 'true'
+      filteredCategories = filteredCategories.filter(category => 
+        category.isVisible === isVisibleBool
+      )
     }
 
-    const body: CreateCategoryData = await request.json()
-    
-    // 验证必要字段
-    if (!body.name || !body.slug || !body.icon || !body.color) {
-      return NextResponse.json({
-        success: false,
-        error: '名称、标识符、图标和颜色不能为空'
-      } as ApiResponse, { status: 400 })
-    }
-    
-    const newCategory = await createCategory(body)
-    
+    // 排序
+    filteredCategories.sort((a, b) => {
+      const aValue = a[sortBy as keyof typeof a] as any
+      const bValue = b[sortBy as keyof typeof b] as any
+      
+      if (sortOrder === 'desc') {
+        return aValue > bValue ? -1 : 1
+      } else {
+        return aValue < bValue ? -1 : 1
+      }
+    })
+
     return NextResponse.json({
       success: true,
-      data: newCategory,
-      message: '分类创建成功'
-    } as ApiResponse, { status: 201 })
-    
+      data: {
+        categories: filteredCategories,
+        total: filteredCategories.length
+      }
+    })
+
   } catch (error) {
-    console.error('创建分类错误:', error)
-    const errorMessage = error instanceof Error ? error.message : '创建分类失败'
-    return NextResponse.json({
-      success: false,
-      error: errorMessage
-    } as ApiResponse, { status: 500 })
+    console.error('获取分类列表失败:', error)
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: '获取分类列表失败',
+        message: error instanceof Error ? error.message : '未知错误'
+      },
+      { status: 500 }
+    )
   }
 } 

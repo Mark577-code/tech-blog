@@ -572,6 +572,90 @@ html {
   scroll-behavior: smooth;
 }
 
+/* 主内容区域样式 */
+.main-content {
+  width: 100%;
+  position: relative;
+}
+
+/* 确保文章内容在全屏文字下方 */
+.mt-screen {
+  margin-top: 100vh;
+}
+
+/* 文章页面布局优化 */
+@media (min-width: 1024px) {
+  .articles-layout {
+    margin-left: 15rem;
+    max-width: calc(100% - 15rem);
+  }
+  
+  .articles-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Live2D 顶层显示 */
+#live2d-container canvas {
+  z-index: 999999 !important;
+  position: relative !important;
+}
+
+#live2d-container {
+  z-index: 999999 !important;
+  position: relative !important;
+  width: 112px !important;
+  height: 112px !important;
+}
+
+/* 确保Live2D Widget显示在最顶层 */
+#L2Dwidget {
+  z-index: 999999 !important;
+  position: relative !important;
+}
+
+/* 确保Live2D容器的父级也有足够的z-index */
+.fixed:has(#live2d-container) {
+  z-index: 100000 !important;
+}
+
+/* Live2D对话框样式 - 确保始终在最顶层 */
+.message-wrap {
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
+.tip-wrap {
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
+/* Live2D Widget相关元素的顶层显示 */
+#waifu-message, #waifu-tool, .message-wrap, .tip-wrap {
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
+/* 全屏文字展示区域 */
+.hero-section {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 逐字动画效果 */
+.typewriter-cursor {
+  display: inline-block;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 /* 自定义滚动条 */
 ::-webkit-scrollbar {
   width: 8px;
@@ -588,4 +672,219 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.8);
+}
+
+/* Live2D对话框强制顶层显示 */
+#live2d-widget .message,
+#live2d-widget .tip,
+.live2d-widget-message,
+.live2d-widget-tip,
+div[id*="message"],
+div[class*="message"],
+div[id*="tip"],
+div[class*="tip"] {
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
+/* Live2D相关所有可能的对话框元素 */
+canvas + div,
+canvas ~ div,
+#L2Dwidget + div,
+#L2Dwidget ~ div {
+  z-index: 999999 !important;
+}
+
+/* 确保Live2D对话框背景透明且可见 */
+.message-wrap, .tip-wrap {
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  max-width: 200px !important;
+  word-wrap: break-word !important;
+  font-size: 14px !important;
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
+/* Markdown 内容样式 */
+.markdown-content {
+  line-height: 1.7;
+  color: hsl(var(--foreground));
+}
+
+.markdown-h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 2rem 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid hsl(var(--border));
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary))/80%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.markdown-h2 {
+  font-size: 1.875rem;
+  font-weight: 600;
+  margin: 1.75rem 0 1rem 0;
+  color: hsl(var(--primary));
+}
+
+.markdown-h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.75rem 0;
+  color: hsl(var(--primary));
+}
+
+.markdown-p {
+  margin: 1rem 0;
+  font-size: 1.1rem;
+  line-height: 1.8;
+}
+
+.markdown-ul, .markdown-ol {
+  margin: 1rem 0;
+  padding-left: 2rem;
+}
+
+.markdown-li, .markdown-li-ordered {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.markdown-li::marker {
+  color: hsl(var(--primary));
+}
+
+.markdown-blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  border-left: 4px solid hsl(var(--primary));
+  background: hsl(var(--muted))/30%;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+}
+
+.markdown-hr {
+  margin: 2rem 0;
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+}
+
+.markdown-link {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--primary))/30%;
+  transition: all 0.2s ease;
+}
+
+.markdown-link:hover {
+  text-decoration-color: hsl(var(--primary));
+  color: hsl(var(--primary))/80%;
+}
+
+.inline-code {
+  background: hsl(var(--muted));
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9em;
+  color: hsl(var(--primary));
+  border: 1px solid hsl(var(--border));
+}
+
+.code-block-wrapper {
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: hsl(var(--muted));
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.language-badge {
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.copy-btn {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: hsl(var(--primary))/80%;
+  transform: translateY(-1px);
+}
+
+.code-block {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  padding: 1rem;
+  margin: 0;
+  overflow-x: auto;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.code-block code {
+  background: none;
+  padding: 0;
+  border: none;
+  color: inherit;
+}
+
+/* 暗色主题适配 */
+.dark .markdown-blockquote {
+  background: hsl(var(--muted))/20%;
+}
+
+.dark .code-block {
+  background: hsl(var(--card));
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .markdown-h1 {
+    font-size: 1.875rem;
+  }
+  
+  .markdown-h2 {
+    font-size: 1.5rem;
+  }
+  
+  .markdown-h3 {
+    font-size: 1.25rem;
+  }
+  
+  .markdown-p, .markdown-li, .markdown-li-ordered {
+    font-size: 1rem;
+  }
+  
+  .code-block {
+    font-size: 0.8rem;
+    padding: 0.75rem;
+  }
 }

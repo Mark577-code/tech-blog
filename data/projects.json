@@ -20,27 +20,7 @@
     "likes": 45
   },
   {
-    "id": "proj-002", 
-    "title": "AI 智能聊天机器人",
-    "slug": "ai-chatbot",
-    "description": "基于大语言模型的智能对话系统，支持多轮对话和上下文理解",
-    "content": "# AI 智能聊天机器人\n\n这是一个基于最新大语言模型技术开发的智能聊天机器人。\n\n## 核心功能\n\n- 自然语言理解\n- 多轮对话支持\n- 上下文记忆\n- 情感分析\n- 知识问答\n\n## 技术实现\n\n使用 OpenAI API 和自定义提示工程，实现高质量的对话体验。",
-    "category": "ai",
-    "tags": ["AI", "ChatGPT", "自然语言处理", "机器学习"],
-    "status": "published",
-    "featured": true,
-    "createdAt": "2025-05-29T08:00:00.000Z",
-    "updatedAt": "2025-05-29T16:00:00.000Z",
-    "author": "admin",
-    "featuredImage": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop",
-    "demoUrl": "https://openai.com/chatgpt",
-    "githubUrl": "https://github.com/openai/openai-quickstart-node",
-    "technologies": ["OpenAI API", "Node.js", "React", "WebSocket"],
-    "viewCount": 189,
-    "likes": 32
-  },
-  {
-    "id": "proj-003",
+    "id": "proj-002",
     "title": "电商小程序",
     "slug": "ecommerce-miniprogram",
     "description": "微信小程序商城，支持商品展示、购物车、订单管理等完整电商功能",
@@ -60,7 +40,7 @@
     "likes": 28
   },
   {
-    "id": "proj-004",
+    "id": "proj-003",
     "title": "数据可视化大屏",
     "slug": "data-visualization-dashboard",
     "description": "企业级数据可视化大屏系统，实时展示业务数据和统计图表",

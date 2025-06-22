@@ -90,7 +90,7 @@ export default function ArticlesPage() {
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="articles-layout articles-container py-10">
       <h1 className="text-4xl font-bold mb-8">文章列表</h1>
       
       {/* 搜索和筛选 */}
@@ -133,7 +133,7 @@ export default function ArticlesPage() {
         </div>
       ) : articles.length > 0 ? (
         <div className="grid gap-6">
-          {articles.map((article) => (
+          {articles.map((article, index) => (
             <Card key={article.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
                 <Link href={`/articles/${article.slug}`} className="block">
@@ -144,6 +144,8 @@ export default function ArticlesPage() {
                           src={article.featuredImage || "/placeholder.svg"}
                           alt={article.title}
                           fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 256px, 256px"
+                          priority={index === 0}
                           className="object-cover"
                         />
                       </div>

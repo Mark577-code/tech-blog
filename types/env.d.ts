@@ -7,14 +7,6 @@ declare namespace NodeJS {
     NEXT_PUBLIC_EMAIL: string
     NEXT_PUBLIC_DESCRIPTION: string
     
-    // AI助手配置
-    OPENAI_API_KEY: string
-    AI_MODEL: string
-    
-    // Dify AI助手配置
-    DIFY_API_KEY: string
-    DIFY_API_BASE_URL: string
-    
     // 社交媒体链接
     NEXT_PUBLIC_GITHUB_URL: string
     NEXT_PUBLIC_TWITTER_URL: string

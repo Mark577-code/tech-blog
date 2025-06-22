@@ -112,6 +112,7 @@ function SearchContent() {
                             src={article.featuredImage}
                             alt={article.title}
                             fill
+                            sizes="192px"
                             className="object-cover"
                           />
                         </div>

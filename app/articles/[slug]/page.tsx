@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, Calendar, Clock, User, Eye, Heart } from 'lucide-react'
+import MarkdownRenderer from '@/components/ui/markdown-renderer'
 import type { Article } from '@/types/article'
 
 const categoryLabels: Record<string, string> = {
@@ -33,7 +34,7 @@ export default function ArticleDetailPage() {
         setLoading(true)
         
         // 获取当前文章
-        const articleResponse = await fetch(`/api/articles/slug/${slug}`)
+        const articleResponse = await fetch(`/api/articles/${slug}`)
         if (articleResponse.status === 404) {
           notFound()
           return
@@ -41,17 +42,17 @@ export default function ArticleDetailPage() {
         
         if (articleResponse.ok) {
           const articleData = await articleResponse.json()
-          if (articleData.success) {
-            setArticle(articleData.data)
+          if (articleData.success && articleData.data) {
+            setArticle(articleData.data.article)
             
             // 获取相关文章（同分类的其他文章）
-            const relatedResponse = await fetch(`/api/articles?status=published&category=${articleData.data.category}&limit=4`)
+            const relatedResponse = await fetch(`/api/articles?status=published&category=${articleData.data.article.category}&limit=4`)
             if (relatedResponse.ok) {
               const relatedData = await relatedResponse.json()
-              if (relatedData.success) {
+              if (relatedData.success && relatedData.data && relatedData.data.articles) {
                 // 排除当前文章，只显示其他文章
                 const related = relatedData.data.articles
-                  .filter((a: Article) => a.id !== articleData.data.id)
+                  .filter((a: Article) => a.id !== articleData.data.article.id)
                   .slice(0, 3)
                 setRelatedArticles(related)
               }
@@ -64,6 +65,8 @@ export default function ArticleDetailPage() {
         }
       } catch (error) {
         console.error('获取文章失败:', error)
+        setArticle(null)
+        setRelatedArticles([])
         notFound()
       } finally {
         setLoading(false)
@@ -97,12 +100,12 @@ export default function ArticleDetailPage() {
   }
 
   const formatContent = (content: string) => {
-    // 简单的段落处理
+    // 简单的段落处理，移除动态效果
     return content
       .split('\n')
       .filter(line => line.trim())
       .map((paragraph, index) => `
-        <p class="mb-6 text-lg leading-relaxed ${index === 0 ? 'text-xl font-medium' : ''} animate-fade-in-up" style="animation-delay: ${index * 0.1}s">
+        <p class="mb-6 text-lg leading-relaxed ${index === 0 ? 'text-xl font-medium' : ''}">
           ${paragraph}
         </p>
       `)
@@ -125,7 +128,7 @@ export default function ArticleDetailPage() {
     )
   }
 
-  if (!article) {
+  if (!article || !article.title || !article.content) {
     return null
   }
 
@@ -153,7 +156,7 @@ export default function ArticleDetailPage() {
           </Button>
         </div>
 
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-2 py-8">
           <article className="max-w-4xl mx-auto">
             {/* 文章头部 */}
             <header className="mb-12 text-center animate-fade-in-up">
@@ -186,7 +189,7 @@ export default function ArticleDetailPage() {
               </div>
 
               {/* 文章标签 */}
-              {article.tags.length > 0 && (
+              {article.tags && article.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 justify-center mb-8 animate-slide-in-right">
                   {article.tags.map((tag) => (
                     <Badge key={tag} variant="outline" className="hover-lift">
@@ -221,6 +224,7 @@ export default function ArticleDetailPage() {
                   src={article.featuredImage}
                   alt={article.title}
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 768px"
                   className="object-cover transition-transform duration-700 hover:scale-105"
                   priority
                 />
@@ -234,17 +238,15 @@ export default function ArticleDetailPage() {
                 transform: `translateY(${scrollY * 0.05}px)`
               }}
             >
-              <div 
+              <MarkdownRenderer 
+                content={article.content}
                 className="text-foreground leading-relaxed"
-                dangerouslySetInnerHTML={{ 
-                  __html: formatContent(article.content)
-                }}
               />
             </div>
           </article>
 
           {/* 相关文章 */}
-          {relatedArticles.length > 0 && (
+          {relatedArticles && relatedArticles.length > 0 && (
             <section 
               className="mt-20 animate-fade-in-up"
               style={{
@@ -270,6 +272,7 @@ export default function ArticleDetailPage() {
                                 src={relatedArticle.featuredImage}
                                 alt={relatedArticle.title}
                                 fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                 className="object-cover transition-transform duration-300 hover:scale-110"
                               />
                             </div>
