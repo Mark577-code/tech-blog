@@ -63,6 +63,7 @@
     "dist",
     "build",
     "coverage",
-    "npm-cache"
+    "npm-cache",
+    "vditor-master"
   ]
 }
