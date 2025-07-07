@@ -42,14 +42,14 @@ export default function Home() {
         if (articlesRes.ok) {
           const articlesData = await articlesRes.json()
           if (articlesData.success) {
-            setArticles(articlesData.data.articles)
+            setArticles(articlesData.data)
           }
         }
 
         if (categoriesRes.ok) {
           const categoriesData = await categoriesRes.json()
           if (categoriesData.success) {
-            setCategories(categoriesData.data.categories)
+            setCategories(categoriesData.data)
           }
         }
       } catch (error) {

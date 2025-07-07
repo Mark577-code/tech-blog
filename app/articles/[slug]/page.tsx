@@ -43,16 +43,16 @@ export default function ArticleDetailPage() {
         if (articleResponse.ok) {
           const articleData = await articleResponse.json()
           if (articleData.success && articleData.data) {
-            setArticle(articleData.data.article)
+            setArticle(articleData.data)
             
             // 获取相关文章（同分类的其他文章）
-            const relatedResponse = await fetch(`/api/articles?status=published&category=${articleData.data.article.category}&limit=4`)
+            const relatedResponse = await fetch(`/api/articles?category=${articleData.data.category}&limit=4`)
             if (relatedResponse.ok) {
               const relatedData = await relatedResponse.json()
-              if (relatedData.success && relatedData.data && relatedData.data.articles) {
+              if (relatedData.success && relatedData.data) {
                 // 排除当前文章，只显示其他文章
-                const related = relatedData.data.articles
-                  .filter((a: Article) => a.id !== articleData.data.article.id)
+                const related = relatedData.data
+                  .filter((a: Article) => a.id !== articleData.data.id)
                   .slice(0, 3)
                 setRelatedArticles(related)
               }

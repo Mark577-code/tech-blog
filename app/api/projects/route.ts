@@ -1,95 +1,103 @@
-import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth'
-import { getAllProjects, createProject } from '@/lib/projects'
-import type { CreateProjectData, ProjectFilters } from '@/types/project'
-import type { ApiResponse } from '@/types/article'
+import { NextRequest, NextResponse } from 'next/server'
+import { dbOperations, supabaseAdmin } from '@/lib/supabase'
 
-export async function GET(request: Request) {
+// GET /api/projects - 获取所有项目
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    
-    const filters: ProjectFilters = {
-      status: (searchParams.get('status') as 'draft' | 'published' | 'all') || 'all',
-      category: searchParams.get('category') || '',
-      search: searchParams.get('search') || '',
-      page: parseInt(searchParams.get('page') || '1'),
-      limit: parseInt(searchParams.get('limit') || '10'),
-      sortBy: (searchParams.get('sortBy') as any) || 'createdAt',
-      sortOrder: (searchParams.get('sortOrder') as any) || 'desc'
+    const status = searchParams.get('status')
+    const limit = searchParams.get('limit')
+    const offset = searchParams.get('offset')
+
+    let projects = await dbOperations.projects.getAll()
+
+    // 状态过滤
+    if (status && status !== 'all') {
+      projects = projects.filter(project => project.status === status)
     }
-    
-    // 处理featured参数
-    const featuredParam = searchParams.get('featured')
-    if (featuredParam === 'true') {
-      filters.featured = true
-    } else if (featuredParam === 'false') {
-      filters.featured = false
+
+    // 分页
+    if (limit) {
+      const limitNum = parseInt(limit)
+      const offsetNum = parseInt(offset || '0')
+      projects = projects.slice(offsetNum, offsetNum + limitNum)
     }
-    
-    // 处理标签参数
-    const tagsParam = searchParams.get('tags')
-    if (tagsParam) {
-      filters.tags = tagsParam.split(',').filter(Boolean)
-    }
-    
-    // 清理空值
-    if (!filters.category) {
-      delete filters.category
-    }
-    if (!filters.search) {
-      delete filters.search
-    }
-    
-    const result = await getAllProjects(filters)
-    
+
     return NextResponse.json({
       success: true,
-      data: result
-    } as ApiResponse)
-    
+      data: projects,
+      total: projects.length
+    })
+
   } catch (error) {
-    console.error('获取项目列表错误:', error)
-    return NextResponse.json({
-      success: false,
-      error: '获取项目列表失败'
-    } as ApiResponse, { status: 500 })
+    console.error('❌ 获取项目失败:', error)
+    return NextResponse.json(
+      { success: false, error: '获取项目失败' },
+      { status: 500 }
+    )
   }
 }
 
-export async function POST(request: Request) {
+// POST /api/projects - 创建新项目
+export async function POST(request: NextRequest) {
   try {
-    // 验证管理员权限
-    const user = await requireAdmin()
-    if (!user) {
-      return NextResponse.json({
-        success: false,
-        error: '需要管理员权限'
-      } as ApiResponse, { status: 401 })
+    const body = await request.json()
+    
+    // 验证必需字段
+    if (!body.title || !body.description) {
+      return NextResponse.json(
+        { success: false, error: '项目标题和描述不能为空' },
+        { status: 400 }
+      )
     }
-    
-    const body: CreateProjectData = await request.json()
-    
-    // 验证必要字段
-    if (!body.title || !body.description || !body.content || !body.category) {
-      return NextResponse.json({
-        success: false,
-        error: '标题、描述、内容和分类不能为空'
-      } as ApiResponse, { status: 400 })
+
+    // 生成 slug
+    const slug = body.slug || createSlug(body.title)
+
+    // 创建项目数据
+    const projectData = {
+      title: body.title,
+      slug,
+      description: body.description,
+      content: body.content || '',
+      tech_stack: body.techStack || [],
+      github_url: body.githubUrl || '',
+      demo_url: body.demoUrl || '',
+      featured_image: body.featuredImage || '',
+      status: body.status || 'completed'
     }
-    
-    const project = await createProject(body, user.username)
-    
+
+    const { data: newProject, error } = await supabaseAdmin
+      .from('projects')
+      .insert(projectData)
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
     return NextResponse.json({
       success: true,
-      data: project,
+      data: newProject,
       message: '项目创建成功'
-    } as ApiResponse, { status: 201 })
-    
+    })
+
   } catch (error) {
-    console.error('创建项目错误:', error)
-    return NextResponse.json({
-      success: false,
-      error: '创建项目失败'
-    } as ApiResponse, { status: 500 })
+    console.error('❌ 创建项目失败:', error)
+    return NextResponse.json(
+      { success: false, error: '创建项目失败' },
+      { status: 500 }
+    )
   }
+}
+
+// 工具函数
+function createSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    || `project-${Date.now()}`
 } 

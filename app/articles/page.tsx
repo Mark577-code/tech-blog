@@ -22,11 +22,11 @@ export default function ArticlesPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories?isVisible=true&sortBy=order&sortOrder=asc')
+      const response = await fetch('/api/categories')
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          setCategories(data.data.categories)
+          setCategories(data.data)
         }
       }
     } catch (error) {
@@ -46,11 +46,8 @@ export default function ArticlesPage() {
     try {
       setLoading(true)
       const params = new URLSearchParams({
-        status: 'published',
-        page: page.toString(),
         limit: '6',
-        sortBy: 'createdAt',
-        sortOrder: 'desc'
+        offset: ((page - 1) * 6).toString()
       })
 
       if (searchTerm) {
@@ -65,8 +62,9 @@ export default function ArticlesPage() {
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          setArticles(data.data.articles)
-          setTotalPages(data.data.pagination.totalPages)
+          setArticles(data.data)
+          // 由于我们使用了简单的分页，这里估算总页数
+          setTotalPages(Math.ceil(data.total / 6) || 1)
         }
       }
     } catch (error) {

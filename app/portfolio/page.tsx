@@ -1,35 +1,54 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useLanguage } from '@/contexts/language-context'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Github, Globe } from 'lucide-react'
-
-const projects = [
-  {
-    id: 1,
-    title: '个人技术博客',
-    description: '使用 Next.js 和 Tailwind CSS 构建的个人博客网站，支持暗色模式和国际化。',
-    image: '/placeholder.png',
-    tags: ['Next.js', 'React', 'Tailwind CSS'],
-    github: 'https://github.com/Mark577-code/tech-blog',
-    demo: 'https://github.com/Mark577-code/tech-blog'
-  }
-]
+import type { Project } from '@/types/project'
 
 export default function Portfolio() {
   const { t } = useLanguage()
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/projects')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setProjects(data.data)
+          }
+        }
+      } catch (error) {
+        console.error('获取项目失败:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProjects()
+  }, [])
 
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-4xl font-bold mb-8">作品集</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {loading ? (
+        <div className="text-center py-16">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">加载中...</p>
+        </div>
+      ) : projects.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {projects.map((project) => (
           <div key={project.id} className="bg-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
             <div className="relative h-48">
               <Image
-                src={project.image || "/placeholder.svg"}
+                src={project.featuredImage || "/placeholder.svg"}
                 alt={project.title}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -42,20 +61,20 @@ export default function Portfolio() {
               <p className="text-muted-foreground mb-4">{project.description}</p>
               
               <div className="flex flex-wrap gap-2 mb-4">
-                {project.tags.map((tag) => (
+                {project.technologies.map((tech: string) => (
                   <span
-                    key={tag}
+                    key={tech}
                     className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                   >
-                    {tag}
+                    {tech}
                   </span>
                 ))}
               </div>
               
               <div className="flex gap-4">
-                {project.github && (
+                {project.githubUrl && (
                   <Link
-                    href={project.github}
+                    href={project.githubUrl}
                     className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
                     target="_blank"
                   >
@@ -63,9 +82,9 @@ export default function Portfolio() {
                     <span>GitHub</span>
                   </Link>
                 )}
-                {project.demo && (
+                {project.demoUrl && (
                   <Link
-                    href={project.demo}
+                    href={project.demoUrl}
                     className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
                     target="_blank"
                   >
@@ -77,7 +96,12 @@ export default function Portfolio() {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      ) : (
+        <div className="text-center py-16">
+          <p className="text-muted-foreground">暂无项目</p>
+        </div>
+      )}
     </div>
   )
 }

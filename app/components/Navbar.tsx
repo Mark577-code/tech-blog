@@ -23,11 +23,11 @@ const Navbar = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/categories?isVisible=true&sortBy=order&sortOrder=asc')
+        const response = await fetch('/api/categories')
         if (response.ok) {
           const data = await response.json()
           if (data.success) {
-            setCategories(data.data.categories)
+            setCategories(data.data)
           }
         }
       } catch (error) {

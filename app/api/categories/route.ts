@@ -1,118 +1,170 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { dbOperations, supabaseAdmin } from '@/lib/supabase'
+import fs from 'fs'
+import path from 'path'
 
-// 模拟分类数据
-const mockCategories = [
-  {
-    id: '1',
-    name: '编程技术',
-    slug: 'programming',
-    description: '编程语言、框架和开发技术相关内容',
-    color: '#3b82f6',
-    isVisible: true,
-    order: 1,
-    articleCount: 3,
-    createdAt: '2025-01-01T00:00:00.000Z',
-    updatedAt: '2025-01-01T00:00:00.000Z'
-  },
-  {
-    id: '2',
-    name: '前端开发',
-    slug: 'frontend',
-    description: '前端技术、框架、工具和最佳实践',
-    color: '#10b981',
-    isVisible: true,
-    order: 2,
-    articleCount: 1,
-    createdAt: '2025-01-01T00:00:00.000Z',
-    updatedAt: '2025-01-01T00:00:00.000Z'
-  },
-  {
-    id: '3',
-    name: '摄影分享',
-    slug: 'photography',
-    description: '摄影技巧、作品分享和后期处理',
-    color: '#f59e0b',
-    isVisible: true,
-    order: 3,
-    articleCount: 2,
-    createdAt: '2025-01-01T00:00:00.000Z',
-    updatedAt: '2025-01-01T00:00:00.000Z'
-  },
-  {
-    id: '4',
-    name: '项目展示',
-    slug: 'projects',
-    description: '个人项目和作品集展示',
-    color: '#8b5cf6',
-    isVisible: true,
-    order: 4,
-    articleCount: 1,
-    createdAt: '2025-01-01T00:00:00.000Z',
-    updatedAt: '2025-01-01T00:00:00.000Z'
-  },
-  {
-    id: '5',
-    name: 'tutorial',
-    slug: 'tutorial',
-    description: '技术教程和学习指南',
-    color: '#ef4444',
-    isVisible: true,
-    order: 5,
-    articleCount: 1,
-    createdAt: '2025-01-01T00:00:00.000Z',
-    updatedAt: '2025-01-01T00:00:00.000Z'
-  }
-]
-
+// GET /api/categories - 获取所有分类
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    
-    // 获取查询参数
-    const isVisible = searchParams.get('isVisible')
-    const sortBy = searchParams.get('sortBy') || 'order'
-    const sortOrder = searchParams.get('sortOrder') || 'asc'
+    let categories
+    let source = 'database'
 
-    // 过滤分类
-    let filteredCategories = mockCategories
+    try {
+      // 尝试使用数据库
+      categories = await dbOperations.categories.getAll()
+      console.log('✅ 成功从数据库获取分类')
 
-    // 按可见性过滤
-    if (isVisible !== null) {
-      const isVisibleBool = isVisible === 'true'
-      filteredCategories = filteredCategories.filter(category => 
-        category.isVisible === isVisibleBool
+      // 为每个分类添加文章数统计
+      const categoriesWithStats = await Promise.all(
+        categories.map(async (category) => {
+          const articles = await dbOperations.articles.getByCategory(category.slug)
+          return {
+            ...category,
+            articleCount: articles.length
+          }
+        })
       )
+
+      return NextResponse.json({
+        success: true,
+        data: categoriesWithStats,
+        source
+      })
+
+    } catch (dbError) {
+      console.log('⚠️ 数据库连接失败，使用本地默认分类:', dbError)
+      source = 'local'
+      
+      // 回退到默认分类
+      const filePath = path.join(process.cwd(), 'data', 'categories.json')
+      
+      if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath, 'utf-8')
+        categories = JSON.parse(fileContent)
+      } else {
+        // 提供默认分类
+        categories = [
+          {
+            id: 'programming',
+            name: '编程技术',
+            slug: 'programming',
+            description: '前端、后端、编程语言等技术分享',
+            color: '#3b82f6',
+            icon: 'code'
+          },
+          {
+            id: 'photography',
+            name: '摄影分享',
+            slug: 'photography',
+            description: '摄影作品、技巧和心得分享',
+            color: '#ef4444',
+            icon: 'camera'
+          },
+          {
+            id: 'tutorial',
+            name: '文字教程',
+            slug: 'tutorial',
+            description: '详细的教程和指南',
+            color: '#10b981',
+            icon: 'book'
+          },
+          {
+            id: 'project',
+            name: '项目展示',
+            slug: 'project',
+            description: '个人项目和作品展示',
+            color: '#f59e0b',
+            icon: 'folder'
+          }
+        ]
+      }
+
+      // 简单的文章数统计（本地模式）
+      const articlesPath = path.join(process.cwd(), 'data', 'articles.json')
+      let articles = []
+      
+      if (fs.existsSync(articlesPath)) {
+        const articlesContent = fs.readFileSync(articlesPath, 'utf-8')
+        articles = JSON.parse(articlesContent)
+      }
+
+      const categoriesWithStats = categories.map((category: any) => ({
+        ...category,
+        articleCount: articles.filter((article: any) => article.category === category.slug).length
+      }))
+
+      return NextResponse.json({
+        success: true,
+        data: categoriesWithStats,
+        source
+      })
     }
 
-    // 排序
-    filteredCategories.sort((a, b) => {
-      const aValue = a[sortBy as keyof typeof a] as any
-      const bValue = b[sortBy as keyof typeof b] as any
-      
-      if (sortOrder === 'desc') {
-        return aValue > bValue ? -1 : 1
-      } else {
-        return aValue < bValue ? -1 : 1
-      }
-    })
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        categories: filteredCategories,
-        total: filteredCategories.length
-      }
-    })
-
   } catch (error) {
-    console.error('获取分类列表失败:', error)
+    console.error('❌ 获取分类失败:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: '获取分类列表失败',
-        message: error instanceof Error ? error.message : '未知错误'
-      },
+      { success: false, error: '获取分类失败' },
       { status: 500 }
     )
   }
+}
+
+// POST /api/categories - 创建新分类
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    
+    // 验证必需字段
+    if (!body.name) {
+      return NextResponse.json(
+        { success: false, error: '分类名称不能为空' },
+        { status: 400 }
+      )
+    }
+
+    // 生成 slug
+    const slug = body.slug || createSlug(body.name)
+
+    // 创建分类数据
+    const categoryData = {
+      name: body.name,
+      slug,
+      description: body.description || '',
+      color: body.color || '#3b82f6',
+      icon: body.icon || 'Folder'
+    }
+
+    const newCategory = await supabaseAdmin
+      .from('categories')
+      .insert(categoryData)
+      .select()
+      .single()
+
+    if (newCategory.error) {
+      throw newCategory.error
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: newCategory.data,
+      message: '分类创建成功'
+    })
+
+  } catch (error) {
+    console.error('❌ 创建分类失败:', error)
+    return NextResponse.json(
+      { success: false, error: '创建分类失败' },
+      { status: 500 }
+    )
+  }
+}
+
+// 工具函数
+function createSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    || `category-${Date.now()}`
 } 

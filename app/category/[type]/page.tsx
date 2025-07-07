@@ -24,21 +24,21 @@ export default function CategoryPage() {
         setLoading(true)
         
         // 获取分类信息
-        const categoryResponse = await fetch('/api/categories?isVisible=true&sortBy=order&sortOrder=asc')
+        const categoryResponse = await fetch('/api/categories')
         if (categoryResponse.ok) {
           const categoryData = await categoryResponse.json()
           if (categoryData.success) {
-            const foundCategory = categoryData.data.categories.find((cat: Category) => cat.slug === type)
+            const foundCategory = categoryData.data.find((cat: Category) => cat.slug === type)
             setCategory(foundCategory || null)
           }
         }
 
         // 获取该分类下的文章
-        const articlesResponse = await fetch(`/api/articles?status=published&category=${type}&sortBy=createdAt&sortOrder=desc`)
+        const articlesResponse = await fetch(`/api/articles?category=${type}`)
         if (articlesResponse.ok) {
           const articlesData = await articlesResponse.json()
           if (articlesData.success) {
-            setArticles(articlesData.data.articles || [])
+            setArticles(articlesData.data || [])
           }
         }
       } catch (error) {
