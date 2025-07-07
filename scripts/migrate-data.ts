@@ -177,7 +177,7 @@ function getRandomColor(): string {
     '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', 
     '#ef4444', '#06b6d4', '#84cc16', '#f97316'
   ]
-  return colors[Math.floor(Math.random() * colors.length)]
+  return colors[Math.floor(Math.random() * colors.length)] || '#3b82f6'
 }
 
 // 验证数据完整性
