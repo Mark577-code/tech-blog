@@ -171,41 +171,26 @@ export default function Welcome() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
         <div className="text-center space-y-12 max-w-4xl mx-auto">
           {/* 主标题 - 打字机效果 */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent leading-tight whitespace-nowrap">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent leading-tight">
             <TypewriterText text="欢迎来到我的博客空间" speed={120} />
           </h1>
 
           {/* 副标题 - 闪烁效果 */}
           {showSecondaryText && (
-            <BlinkingText 
-              text="世界很大，不妨去看看"
-              className="text-xl md:text-3xl text-gray-300 font-light whitespace-nowrap"
-            />
+            <BlinkingText text="世界很大，不妨去看看" className="text-xl md:text-3xl text-gray-300 font-light" />
           )}
 
           {/* 进入按钮 */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
             <Link href="/blog">
-              <Button 
-                size="lg"
-                className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-              >
-                <span className="flex items-center gap-2">
-                  进入博客
-                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </span>
+              <Button size="lg" className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <span className="flex items-center gap-2">进入博客<ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></span>
                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
               </Button>
             </Link>
 
             <Link href="/about">
-              <Button 
-                variant="outline"
-                size="lg"
-                className="px-8 py-4 border-2 border-blue-400/50 text-blue-400 hover:bg-blue-400/10 hover:border-blue-400 rounded-full transition-all duration-300 hover:scale-105"
-              >
-                了解更多
-              </Button>
+              <Button variant="outline" size="lg" className="px-8 py-4 border-2 border-blue-400/50 text-blue-400 hover:bg-blue-400/10 hover:border-blue-400 rounded-full transition-all duration-300 hover:scale-105">了解更多</Button>
             </Link>
           </div>
         </div>

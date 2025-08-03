@@ -6,7 +6,7 @@ export class ApiError extends Error {
   }
 }
 
-export function handleApiError(error: any) {
+export function handleApiError(error: any): { message: string; status: number } {
   console.error('API Error:', error)
 
   // Supabase错误处理
@@ -14,73 +14,63 @@ export function handleApiError(error: any) {
     switch (error.code) {
       case '23505': // unique_violation
         if (error.details?.includes('slug')) {
-          return NextResponse.json({
-            success: false,
-            error: '文章标题已存在，系统将自动生成唯一标识符，请重试',
-            code: 'DUPLICATE_SLUG'
-          }, { status: 409 })
+          return {
+            message: '文章标题已存在，系统将自动生成唯一标识符，请重试',
+            status: 409
+          }
         }
-        return NextResponse.json({
-          success: false,
-          error: '数据重复，请检查输入',
-          code: 'DUPLICATE_DATA'
-        }, { status: 409 })
+        return {
+          message: '数据重复，请检查输入',
+          status: 409
+        }
       
       case '42P01': // undefined_table
-        return NextResponse.json({
-          success: false,
-          error: '数据表不存在，请检查数据库配置',
-          code: 'TABLE_NOT_FOUND'
-        }, { status: 500 })
+        return {
+          message: '数据表不存在，请检查数据库配置',
+          status: 500
+        }
       
       case 'PGRST116': // no_rows
-        return NextResponse.json({
-          success: false,
-          error: '未找到请求的数据',
-          code: 'NOT_FOUND'
-        }, { status: 404 })
+        return {
+          message: '未找到请求的数据',
+          status: 404
+        }
       
       case '23503': // foreign_key_violation
-        return NextResponse.json({
-          success: false,
-          error: '数据关联错误，请检查相关数据',
-          code: 'FOREIGN_KEY_ERROR'
-        }, { status: 400 })
+        return {
+          message: '数据关联错误，请检查相关数据',
+          status: 400
+        }
       
       case '23514': // check_violation
-        return NextResponse.json({
-          success: false,
-          error: '数据格式不符合要求',
-          code: 'DATA_FORMAT_ERROR'
-        }, { status: 400 })
+        return {
+          message: '数据格式不符合要求',
+          status: 400
+        }
     }
   }
 
   // 自定义API错误
   if (error instanceof ApiError) {
-    return NextResponse.json({
-      success: false,
-      error: error.message,
-      code: 'API_ERROR'
-    }, { status: error.statusCode })
+    return {
+      message: error.message,
+      status: error.statusCode
+    }
   }
 
   // 网络或连接错误
   if (error?.message?.includes('fetch')) {
-    return NextResponse.json({
-      success: false,
-      error: '网络连接错误，请检查网络连接',
-      code: 'NETWORK_ERROR'
-    }, { status: 503 })
+    return {
+      message: '网络连接错误，请检查网络连接',
+      status: 503
+    }
   }
 
   // 默认错误
-  return NextResponse.json({
-    success: false,
-    error: '服务器内部错误，请稍后重试',
-    details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
-    code: 'INTERNAL_ERROR'
-  }, { status: 500 })
+  return {
+    message: '服务器内部错误，请稍后重试',
+    status: 500
+  }
 }
 
 export function validateArticleData(data: any): { isValid: boolean; errors: string[] } {

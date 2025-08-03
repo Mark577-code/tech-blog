@@ -54,7 +54,11 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ 获取文章列表失败:', error)
-    return handleApiError(error)
+    const errorInfo = handleApiError(error)
+    return NextResponse.json(
+      { success: false, error: errorInfo.message },
+      { status: errorInfo.status }
+    )
   }
 }
 
@@ -132,7 +136,11 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ 创建文章失败:', error)
-    return handleApiError(error)
+    const errorInfo = handleApiError(error)
+    return NextResponse.json(
+      { success: false, error: errorInfo.message },
+      { status: errorInfo.status }
+    )
   }
 }
 
@@ -250,7 +258,11 @@ export async function PUT(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ 更新文章失败:', error)
-    return handleApiError(error)
+    const errorInfo = handleApiError(error)
+    return NextResponse.json(
+      { success: false, error: errorInfo.message },
+      { status: errorInfo.status }
+    )
   }
 }
 
@@ -261,7 +273,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json({
-        success: false,
+        success: false, 
         error: '缺少文章ID'
       }, { status: 400 })
     }
@@ -287,6 +299,10 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ 删除文章失败:', error)
-    return handleApiError(error)
+    const errorInfo = handleApiError(error)
+    return NextResponse.json(
+      { success: false, error: errorInfo.message },
+      { status: errorInfo.status }
+    )
   }
 } 
