@@ -9,12 +9,13 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit')
     const offset = searchParams.get('offset')
 
-    let projects = await dbOperations.projects.getAll()
-
-    // 状态过滤
-    if (status && status !== 'all') {
-      projects = projects.filter(project => project.status === status)
+    // 映射前端状态到数据库状态
+    let dbStatus: string | undefined = status || undefined
+    if (status === 'published') {
+      dbStatus = 'completed'  // 将 published 映射为 completed
     }
+
+    let projects = await dbOperations.projects.getAll(dbStatus)
 
     // 分页
     if (limit) {

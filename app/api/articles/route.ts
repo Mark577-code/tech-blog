@@ -1,169 +1,292 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { dbOperations } from '@/lib/supabase'
-import fs from 'fs'
-import path from 'path'
+import { dbOperations, supabaseAdmin } from '@/lib/supabase'
+import { handleApiError, validateArticleData } from '@/lib/error-handler'
+import { generateUniqueSlug, calculateReadTime, generateSummary } from '@/lib/articles'
 
-// GET /api/articles - 获取所有文章
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    const status = searchParams.get('status')
+    const sortBy = searchParams.get('sortBy') || 'created_at'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
+    const limit = parseInt(searchParams.get('limit') || '10')
+    const offset = parseInt(searchParams.get('offset') || '0')
     const category = searchParams.get('category')
-    const tag = searchParams.get('tag')
-    const search = searchParams.get('search')
-    const limit = searchParams.get('limit')
-    const offset = searchParams.get('offset')
 
-    let articles
-    let source = 'database'
+    console.log('✅ API调用参数:', { status, sortBy, sortOrder, limit, offset, category })
 
-    try {
-      // 尝试使用数据库
-      if (category) {
-        articles = await dbOperations.articles.getByCategory(category)
-      } else {
-        articles = await dbOperations.articles.getAll()
-      }
-      console.log('✅ 成功从数据库获取文章')
-    } catch (dbError) {
-      console.log('⚠️ 数据库连接失败，使用本地文件:', dbError)
-      source = 'local'
-      
-      // 回退到本地JSON文件
-      const filePath = path.join(process.cwd(), 'data', 'articles.json')
-      
-      if (fs.existsSync(filePath)) {
-        const fileContent = fs.readFileSync(filePath, 'utf-8')
-        articles = JSON.parse(fileContent)
-        
-        // 转换数据格式以匹配数据库字段
-        articles = articles.map((article: any) => ({
-          ...article,
-          summary: article.excerpt || article.summary,
-          published_at: article.createdAt,
-          read_time: article.readingTime,
-          featured_image: article.featuredImage
-        }))
-      } else {
-        articles = []
-      }
+    let query = supabaseAdmin
+      .from('articles')
+      .select('*')
+
+    // 状态筛选
+    if (status && status !== 'all') {
+      query = query.eq('status', status)
     }
 
-    // 前端搜索过滤
-    if (search) {
-      const searchLower = search.toLowerCase()
-      articles = articles.filter((article: any) => 
-        article.title.toLowerCase().includes(searchLower) ||
-        (article.summary && article.summary.toLowerCase().includes(searchLower)) ||
-        (article.content && article.content.toLowerCase().includes(searchLower)) ||
-        (article.tags && article.tags.some((tagItem: string) => tagItem.toLowerCase().includes(searchLower)))
-      )
-    }
-
-    // 分类过滤
+    // 分类筛选
     if (category) {
-      articles = articles.filter((article: any) => article.category === category)
+      query = query.eq('category', category)
     }
 
-    // 标签过滤
-    if (tag) {
-      articles = articles.filter((article: any) => 
-        article.tags && article.tags.includes(tag)
-      )
-    }
-
-    // 排序（按创建时间倒序）
-    articles.sort((a: any, b: any) => {
-      const dateA = new Date(a.published_at || a.createdAt || a.updatedAt).getTime()
-      const dateB = new Date(b.published_at || b.createdAt || b.updatedAt).getTime()
-      return dateB - dateA
-    })
+    // 排序
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' })
 
     // 分页
-    const totalArticles = articles.length
-    if (limit) {
-      const limitNum = parseInt(limit)
-      const offsetNum = parseInt(offset || '0')
-      articles = articles.slice(offsetNum, offsetNum + limitNum)
+    if (limit > 0) {
+      query = query.range(offset, offset + limit - 1)
     }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('❌ 获取文章失败:', error)
+      throw error
+    }
+
+    console.log('✅ 成功获取文章:', data?.length || 0, '篇')
 
     return NextResponse.json({
       success: true,
-      data: articles,
-      total: totalArticles,
-      source
+      data: data || [],
+      total: data?.length || 0
     })
 
   } catch (error) {
-    console.error('❌ 获取文章失败:', error)
-    return NextResponse.json(
-      { success: false, error: '获取文章失败' },
-      { status: 500 }
-    )
+    console.error('❌ 获取文章列表失败:', error)
+    return handleApiError(error)
   }
 }
 
-// POST /api/articles - 创建新文章
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
-    // 验证必需字段
-    if (!body.title || !body.content) {
-      return NextResponse.json(
-        { success: false, error: '标题和内容不能为空' },
-        { status: 400 }
-      )
+    console.log('📝 创建文章请求:', body)
+
+    // 验证数据
+    const validation = validateArticleData(body)
+    if (!validation.isValid) {
+      return NextResponse.json({
+        success: false,
+        error: `数据验证失败: ${validation.errors.join(', ')}`
+      }, { status: 400 })
     }
 
-    // 生成 slug
-    const slug = body.slug || createSlug(body.title)
+    const { title, content, summary, category, tags, status, featured_image } = body
+
+    // 生成唯一slug
+    const slug = await generateUniqueSlug(title, supabaseAdmin)
+    console.log('🔗 生成的slug:', slug)
+
+    // 计算阅读时间
+    const readTime = Math.max(1, calculateReadTime(content))
+
+    // 生成摘要（如果未提供）
+    const finalSummary = summary || generateSummary(content)
 
     // 创建文章数据
     const articleData = {
-      title: body.title,
+      title: title.trim(),
       slug,
-      content: body.content,
-      summary: body.summary || body.content.substring(0, 200) + '...',
-      category: body.category || 'programming',
-      tags: body.tags || [],
-      author: body.author || 'Mark-李',
-      published_at: new Date().toISOString(),
-      featured_image: body.featuredImage,
-      read_time: calculateReadTime(body.content),
-      status: body.status || 'published',
-      seo_title: body.seoTitle || body.title,
-      seo_description: body.seoDescription || body.summary
+      content,
+      summary: finalSummary,
+      category,
+      tags: Array.isArray(tags) ? tags : [],
+      status: status || 'draft',
+      author: 'admin',
+      featured_image: featured_image || null,
+      read_time: readTime,
+      published_at: status === 'published' ? new Date().toISOString() : null
     }
 
-    const newArticle = await dbOperations.articles.create(articleData)
+    console.log('💾 准备插入的文章数据:', articleData)
+
+    // 插入到数据库
+    const { data, error } = await supabaseAdmin
+      .from('articles')
+      .insert([articleData])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('❌ 创建文章失败:', error)
+      
+      // 特殊处理常见错误
+      if (error.code === '23505') {
+        return NextResponse.json({
+          success: false,
+          error: 'slug已存在，请修改文章标题或稍后重试'
+        }, { status: 409 })
+      }
+      
+      throw error
+    }
+
+    console.log('✅ 文章创建成功:', data)
 
     return NextResponse.json({
       success: true,
-      data: newArticle,
+      data,
       message: '文章创建成功'
     })
 
   } catch (error) {
     console.error('❌ 创建文章失败:', error)
-    return NextResponse.json(
-      { success: false, error: '创建文章失败' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
-// 工具函数
-function createSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    || `article-${Date.now()}`
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json()
+    console.log('🔄 更新文章请求:', body)
+
+    const { id, title, content, summary, category, tags, status, featured_image } = body
+
+    if (!id) {
+      return NextResponse.json({
+        success: false,
+        error: '缺少文章ID'
+      }, { status: 400 })
+    }
+
+    // 验证数据
+    const validation = validateArticleData(body)
+    if (!validation.isValid) {
+      return NextResponse.json({
+        success: false,
+        error: `数据验证失败: ${validation.errors.join(', ')}`
+      }, { status: 400 })
+    }
+
+    // 获取原文章数据
+    const { data: originalArticle, error: fetchError } = await supabaseAdmin
+      .from('articles')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) {
+      console.error('❌ 获取原文章失败:', fetchError)
+      return NextResponse.json({
+        success: false,
+        error: '文章不存在'
+      }, { status: 404 })
+    }
+
+    // 生成新的slug（如果标题改变了）
+    let slug = originalArticle.slug
+    if (title && title.trim() !== originalArticle.title) {
+      slug = await generateUniqueSlug(title, supabaseAdmin, id)
+      console.log('🔗 更新的slug:', slug)
+    }
+
+    // 重新计算阅读时间（如果内容改变了）
+    let readTime = originalArticle.read_time
+    if (content && content !== originalArticle.content) {
+      readTime = Math.max(1, calculateReadTime(content))
+    }
+
+    // 更新摘要（如果提供了新的或内容改变了）
+    let finalSummary = summary
+    if (!summary && content && content !== originalArticle.content) {
+      finalSummary = generateSummary(content)
+    } else if (!summary) {
+      finalSummary = originalArticle.summary
+    }
+
+    // 准备更新数据
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    }
+
+    if (title !== undefined) updateData.title = title.trim()
+    if (slug !== originalArticle.slug) updateData.slug = slug
+    if (content !== undefined) updateData.content = content
+    if (finalSummary !== undefined) updateData.summary = finalSummary
+    if (category !== undefined) updateData.category = category
+    if (tags !== undefined) updateData.tags = Array.isArray(tags) ? tags : []
+    if (status !== undefined) {
+      updateData.status = status
+      // 如果状态改为published且之前没有发布时间，设置发布时间
+      if (status === 'published' && !originalArticle.published_at) {
+        updateData.published_at = new Date().toISOString()
+      }
+    }
+    if (featured_image !== undefined) updateData.featured_image = featured_image || null
+    if (readTime !== originalArticle.read_time) updateData.read_time = readTime
+
+    console.log('💾 准备更新的数据:', updateData)
+
+    // 更新文章
+    const { data, error } = await supabaseAdmin
+      .from('articles')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('❌ 更新文章失败:', error)
+      
+      // 特殊处理常见错误
+      if (error.code === '23505') {
+        return NextResponse.json({
+          success: false,
+          error: 'slug已存在，请修改文章标题'
+        }, { status: 409 })
+      }
+      
+      throw error
+    }
+
+    console.log('✅ 文章更新成功:', data)
+
+    return NextResponse.json({
+      success: true,
+      data,
+      message: '文章更新成功'
+    })
+
+  } catch (error) {
+    console.error('❌ 更新文章失败:', error)
+    return handleApiError(error)
+  }
 }
 
-function calculateReadTime(content: string): number {
-  const wordsPerMinute = 200
-  const words = content.split(/\s+/).length
-  return Math.ceil(words / wordsPerMinute)
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({
+        success: false,
+        error: '缺少文章ID'
+      }, { status: 400 })
+    }
+
+    console.log('🗑️ 删除文章:', id)
+
+    const { error } = await supabaseAdmin
+      .from('articles')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('❌ 删除文章失败:', error)
+      throw error
+    }
+
+    console.log('✅ 文章删除成功')
+
+    return NextResponse.json({
+      success: true,
+      message: '文章删除成功'
+    })
+
+  } catch (error) {
+    console.error('❌ 删除文章失败:', error)
+    return handleApiError(error)
+  }
 } 

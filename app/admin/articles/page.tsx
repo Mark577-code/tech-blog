@@ -9,25 +9,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
-import { PlusCircle, Edit, Trash2, Eye, Save, X } from 'lucide-react'
+import { PlusCircle, Edit, Trash2, Eye, Save, X, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import MarkdownEditor from '@/components/MarkdownEditor'
 
 interface Article {
   id: string
   title: string
   slug: string
   content: string
-  excerpt: string
+  summary: string
   category: string
   tags: string[]
   status: 'draft' | 'published'
-  createdAt: string
-  updatedAt: string
+  created_at: string
+  updated_at: string
+  published_at: string
   author: string
-  featuredImage: string
-  readingTime: number
-  viewCount: number
-  likes: number
+  featured_image: string
+  read_time: number
 }
 
 const categories = [
@@ -41,128 +41,158 @@ export default function ArticlesAdmin() {
   const [articles, setArticles] = useState<Article[]>([])
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('list')
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    excerpt: '',
+    summary: '',
     category: '',
     tags: '',
     status: 'draft' as 'draft' | 'published',
-    featuredImage: ''
+    featured_image: ''
   })
 
-  // 从localStorage加载文章
+  // 加载文章数据
   useEffect(() => {
-    const saved = localStorage.getItem('blog_articles')
-    if (saved) {
-      setArticles(JSON.parse(saved))
-    } else {
-      // 如果没有本地数据，加载默认文章
-      loadDefaultArticles()
-    }
+    loadArticles()
   }, [])
 
-  const loadDefaultArticles = async () => {
+  const loadArticles = async () => {
     try {
-      const response = await fetch('/data/articles.json')
-      const defaultArticles = await response.json()
-      setArticles(defaultArticles)
-      localStorage.setItem('blog_articles', JSON.stringify(defaultArticles))
+      setLoading(true)
+      const response = await fetch('/api/articles?status=all')
+      const result = await response.json()
+      
+      if (result.success) {
+        setArticles(result.data || [])
+      } else {
+        toast.error(`加载文章失败: ${result.error}`)
+        console.error('加载文章失败:', result)
+      }
     } catch (error) {
-      console.error('加载默认文章失败:', error)
+      toast.error('网络错误，无法加载文章')
+      console.error('加载文章失败:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  // 保存文章到localStorage
-  const saveArticles = (newArticles: Article[]) => {
-    setArticles(newArticles)
-    localStorage.setItem('blog_articles', JSON.stringify(newArticles))
-  }
-
-  // 生成文章ID和slug
-  const generateId = () => Math.random().toString(36).substr(2, 15)
-  const generateSlug = (title: string) => 
-    title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '')
-
   // 创建新文章
-  const createArticle = () => {
+  const createArticle = async () => {
     if (!formData.title || !formData.content) {
       toast.error('请填写标题和内容')
       return
     }
 
-    const newArticle: Article = {
-      id: generateId(),
-      title: formData.title,
-      slug: generateSlug(formData.title),
-      content: formData.content,
-      excerpt: formData.excerpt || formData.content.substring(0, 100) + '...',
-      category: formData.category || 'programming',
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-      status: formData.status,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      author: 'Mark-李',
-      featuredImage: formData.featuredImage || '/placeholder.svg',
-      readingTime: Math.ceil(formData.content.length / 500), // 估算阅读时间
-      viewCount: 0,
-      likes: 0
-    }
+    try {
+      setLoading(true)
+      const response = await fetch('/api/articles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          content: formData.content,
+          summary: formData.summary,
+          category: formData.category || 'programming',
+          tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+          status: formData.status,
+          featured_image: formData.featured_image
+        })
+      })
 
-    const newArticles = [newArticle, ...articles]
-    saveArticles(newArticles)
-    
-    // 重置表单
-    setFormData({
-      title: '',
-      content: '',
-      excerpt: '',
-      category: '',
-      tags: '',
-      status: 'draft',
-      featuredImage: ''
-    })
-    setIsCreating(false)
-    toast.success('文章创建成功！')
+      const result = await response.json()
+      
+      if (result.success) {
+        toast.success('文章创建成功！')
+        resetForm()
+        setActiveTab('list')
+        await loadArticles() // 重新加载文章列表
+      } else {
+        toast.error(`创建失败: ${result.error}`)
+        console.error('创建文章失败:', result)
+      }
+    } catch (error) {
+      toast.error('网络错误，创建失败')
+      console.error('创建文章失败:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // 更新文章
-  const updateArticle = () => {
+  const updateArticle = async () => {
     if (!editingArticle || !formData.title || !formData.content) {
       toast.error('请填写标题和内容')
       return
     }
 
-    const updatedArticle: Article = {
-      ...editingArticle,
-      title: formData.title,
-      slug: generateSlug(formData.title),
-      content: formData.content,
-      excerpt: formData.excerpt || formData.content.substring(0, 100) + '...',
-      category: formData.category || 'programming',
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-      status: formData.status,
-      updatedAt: new Date().toISOString(),
-      featuredImage: formData.featuredImage || '/placeholder.svg',
-      readingTime: Math.ceil(formData.content.length / 500)
-    }
+    try {
+      setLoading(true)
+      const response = await fetch('/api/articles', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: editingArticle.id,
+          title: formData.title,
+          content: formData.content,
+          summary: formData.summary,
+          category: formData.category,
+          tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+          status: formData.status,
+          featured_image: formData.featured_image
+        })
+      })
 
-    const newArticles = articles.map(article => 
-      article.id === editingArticle.id ? updatedArticle : article
-    )
-    saveArticles(newArticles)
-    
-    setEditingArticle(null)
-    resetForm()
-    toast.success('文章更新成功！')
+      const result = await response.json()
+      
+      if (result.success) {
+        toast.success('文章更新成功！')
+        resetForm()
+        setActiveTab('list')
+        await loadArticles() // 重新加载文章列表
+      } else {
+        toast.error(`更新失败: ${result.error}`)
+        console.error('更新文章失败:', result)
+      }
+    } catch (error) {
+      toast.error('网络错误，更新失败')
+      console.error('更新文章失败:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // 删除文章
-  const deleteArticle = (id: string) => {
-    if (confirm('确定要删除这篇文章吗？')) {
-      const newArticles = articles.filter(article => article.id !== id)
-      saveArticles(newArticles)
-      toast.success('文章删除成功！')
+  const deleteArticle = async (id: string) => {
+    if (!confirm('确定要删除这篇文章吗？此操作不可撤销！')) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/articles?id=${id}`, {
+        method: 'DELETE'
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        toast.success('文章删除成功！')
+        await loadArticles() // 重新加载文章列表
+      } else {
+        toast.error(`删除失败: ${result.error}`)
+        console.error('删除文章失败:', result)
+      }
+    } catch (error) {
+      toast.error('网络错误，删除失败')
+      console.error('删除文章失败:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -172,13 +202,14 @@ export default function ArticlesAdmin() {
     setFormData({
       title: article.title,
       content: article.content,
-      excerpt: article.excerpt,
+      summary: article.summary,
       category: article.category,
       tags: article.tags.join(', '),
       status: article.status,
-      featuredImage: article.featuredImage
+      featured_image: article.featured_image || ''
     })
     setIsCreating(false)
+    setActiveTab('edit')
   }
 
   // 重置表单
@@ -186,14 +217,21 @@ export default function ArticlesAdmin() {
     setFormData({
       title: '',
       content: '',
-      excerpt: '',
+      summary: '',
       category: '',
       tags: '',
       status: 'draft',
-      featuredImage: ''
+      featured_image: ''
     })
     setIsCreating(false)
     setEditingArticle(null)
+  }
+
+  // 开始创建新文章
+  const startCreating = () => {
+    resetForm()
+    setIsCreating(true)
+    setActiveTab('edit')
   }
 
   // 快速创建示例文章
@@ -239,7 +277,7 @@ function log(target: any, propertyName: string, descriptor: PropertyDescriptor) 
 \`\`\`
 
 掌握这些技巧可以让你的 TypeScript 代码更加健壮和优雅！`,
-        excerpt: '分享 TypeScript 的高级使用技巧，包括条件类型、工具类型和装饰器模式等实用内容。',
+        summary: '分享 TypeScript 的高级使用技巧，包括条件类型、工具类型和装饰器模式等实用内容。',
         category: 'programming',
         tags: 'TypeScript, JavaScript, 前端开发, 类型系统'
       },
@@ -290,7 +328,7 @@ function log(target: any, propertyName: string, descriptor: PropertyDescriptor) 
 - 高光压制
 
 通过这些技巧，你可以拍出令人印象深刻的夜景作品！`,
-        excerpt: '详细介绍夜景摄影的器材准备、拍摄技巧和后期处理方法，帮助摄影爱好者提升夜拍水平。',
+        summary: '详细介绍夜景摄影的器材准备、拍摄技巧和后期处理方法，帮助摄影爱好者提升夜拍水平。',
         category: 'photography',
         tags: '夜景摄影, 摄影技巧, 后期处理, 器材推荐'
       },
@@ -356,7 +394,7 @@ chore: 其他修改
 - hotfix/紧急修复
 
 遵循这些最佳实践可以让团队协作更加高效！`,
-        excerpt: '介绍 Git Flow 和 GitHub Flow 等工作流模式，以及分支管理和提交规范的最佳实践。',
+        summary: '介绍 Git Flow 和 GitHub Flow 等工作流模式，以及分支管理和提交规范的最佳实践。',
         category: 'tutorial',
         tags: 'Git, 版本控制, 团队协作, 工作流'
       }
@@ -367,37 +405,52 @@ chore: 其他修改
       setFormData({
         title: sample.title,
         content: sample.content,
-        excerpt: sample.excerpt,
+        summary: sample.summary,
         category: sample.category,
         tags: sample.tags,
         status: 'published',
-        featuredImage: '/placeholder.svg'
+        featured_image: ''
       })
       setIsCreating(true)
       setEditingArticle(null)
+      setActiveTab('edit')
     }
   }
 
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">文章管理</h1>
-        <p className="text-muted-foreground">创建和管理你的博客文章</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold mb-4">文章管理</h1>
+            <p className="text-muted-foreground">创建和管理你的博客文章</p>
+          </div>
+          <Button 
+            onClick={loadArticles}
+            disabled={loading}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            刷新
+          </Button>
+        </div>
       </div>
 
-      <Tabs defaultValue="list" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="list">文章列表</TabsTrigger>
+          <TabsTrigger value="list">文章列表 ({articles.length})</TabsTrigger>
           <TabsTrigger value="edit">
             {editingArticle ? '编辑文章' : isCreating ? '创建文章' : '创建文章'}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="list" className="space-y-4">
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-2 mb-4 flex-wrap">
             <Button 
-              onClick={() => setIsCreating(true)}
+              onClick={startCreating}
               className="flex items-center gap-2"
+              disabled={loading}
             >
               <PlusCircle className="h-4 w-4" />
               新建文章
@@ -406,6 +459,7 @@ chore: 其他修改
             <Button 
               variant="outline"
               onClick={() => createSampleArticle('tech')}
+              disabled={loading}
             >
               技术文章示例
             </Button>
@@ -413,6 +467,7 @@ chore: 其他修改
             <Button 
               variant="outline"
               onClick={() => createSampleArticle('photo')}
+              disabled={loading}
             >
               摄影文章示例
             </Button>
@@ -420,61 +475,83 @@ chore: 其他修改
             <Button 
               variant="outline"
               onClick={() => createSampleArticle('tutorial')}
+              disabled={loading}
             >
               教程文章示例
             </Button>
           </div>
 
-          <div className="grid gap-4">
-            {articles.map((article) => (
-              <Card key={article.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">{article.title}</CardTitle>
-                      <div className="flex gap-2 mt-2">
-                        <Badge variant="secondary">{categories.find(c => c.value === article.category)?.label}</Badge>
-                        <Badge variant={article.status === 'published' ? 'default' : 'outline'}>
-                          {article.status === 'published' ? '已发布' : '草稿'}
-                        </Badge>
+          {loading && articles.length === 0 ? (
+            <div className="text-center py-8">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">加载中...</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {articles.map((article) => (
+                <Card key={article.id}>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{article.title}</CardTitle>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="secondary">{categories.find(c => c.value === article.category)?.label}</Badge>
+                          <Badge variant={article.status === 'published' ? 'default' : 'outline'}>
+                            {article.status === 'published' ? '已发布' : '草稿'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => editArticle(article)}
+                          disabled={loading}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(`/articles/${article.slug}`, '_blank')}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteArticle(article.id)}
+                          disabled={loading}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => editArticle(article)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(`/articles/${article.slug}`, '_blank')}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteArticle(article.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-2">{article.summary}</p>
+                    <div className="flex gap-2 text-xs text-muted-foreground">
+                      <span>阅读时间: {article.read_time}分钟</span>
+                      <span>•</span>
+                      <span>创建于: {new Date(article.created_at).toLocaleDateString()}</span>
+                      {article.updated_at !== article.created_at && (
+                        <>
+                          <span>•</span>
+                          <span>更新于: {new Date(article.updated_at).toLocaleDateString()}</span>
+                        </>
+                      )}
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-2">{article.excerpt}</p>
-                  <div className="flex gap-2 text-xs text-muted-foreground">
-                    <span>阅读时间: {article.readingTime}分钟</span>
-                    <span>•</span>
-                    <span>创建于: {new Date(article.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {articles.length === 0 && !loading && (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">暂无文章，点击上方按钮创建第一篇文章吧！</p>
+                </div>
+              )}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="edit" className="space-y-4">
@@ -487,18 +564,19 @@ chore: 其他修改
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">标题</Label>
+                  <Label htmlFor="title">标题 *</Label>
                   <Input
                     id="title"
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                     placeholder="输入文章标题"
+                    disabled={loading}
                   />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="category">分类</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                  <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})} disabled={loading}>
                     <SelectTrigger>
                       <SelectValue placeholder="选择分类" />
                     </SelectTrigger>
@@ -514,25 +592,25 @@ chore: 其他修改
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="excerpt">摘要</Label>
+                <Label htmlFor="summary">摘要</Label>
                 <Textarea
-                  id="excerpt"
-                  value={formData.excerpt}
-                  onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
+                  id="summary"
+                  value={formData.summary}
+                  onChange={(e) => setFormData({...formData, summary: e.target.value})}
                   placeholder="文章摘要（可选，不填写将自动生成）"
                   rows={3}
+                  disabled={loading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="content">内容 (支持 Markdown)</Label>
-                <Textarea
-                  id="content"
+                <Label htmlFor="content">内容 (支持 Markdown) *</Label>
+                <MarkdownEditor
                   value={formData.content}
-                  onChange={(e) => setFormData({...formData, content: e.target.value})}
-                  placeholder="输入文章内容，支持 Markdown 语法"
-                  rows={15}
-                  className="font-mono text-sm"
+                  onChange={(value) => setFormData({...formData, content: value})}
+                  placeholder="输入文章内容，支持 Markdown 语法..."
+                  height={500}
+                  disabled={loading}
                 />
               </div>
 
@@ -544,12 +622,13 @@ chore: 其他修改
                     value={formData.tags}
                     onChange={(e) => setFormData({...formData, tags: e.target.value})}
                     placeholder="标签1, 标签2, 标签3"
+                    disabled={loading}
                   />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="status">状态</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value as 'draft' | 'published'})}>
+                  <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value as 'draft' | 'published'})} disabled={loading}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -562,21 +641,29 @@ chore: 其他修改
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="featuredImage">特色图片 URL</Label>
+                <Label htmlFor="featured_image">特色图片 URL</Label>
                 <Input
-                  id="featuredImage"
-                  value={formData.featuredImage}
-                  onChange={(e) => setFormData({...formData, featuredImage: e.target.value})}
+                  id="featured_image"
+                  value={formData.featured_image}
+                  onChange={(e) => setFormData({...formData, featured_image: e.target.value})}
                   placeholder="https://example.com/image.jpg"
+                  disabled={loading}
                 />
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={editingArticle ? updateArticle : createArticle}>
-                  <Save className="h-4 w-4 mr-2" />
+                <Button 
+                  onClick={editingArticle ? updateArticle : createArticle}
+                  disabled={loading || !formData.title || !formData.content}
+                >
+                  {loading ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
                   {editingArticle ? '更新文章' : '创建文章'}
                 </Button>
-                <Button variant="outline" onClick={resetForm}>
+                <Button variant="outline" onClick={resetForm} disabled={loading}>
                   <X className="h-4 w-4 mr-2" />
                   取消
                 </Button>

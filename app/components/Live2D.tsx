@@ -8,6 +8,7 @@ import dynamic from "next/dynamic"
 declare global {
   interface Window {
     L2Dwidget: any
+    live2d_path?: string // 添加类型声明避免重复声明错误
   }
 }
 
@@ -34,6 +35,12 @@ const Live2D = () => {
           if (!container) {
             console.warn('Live2D container not found')
             return
+          }
+
+          // 清理已存在的Live2D实例
+          const existingCanvas = document.querySelector('#L2Dwidget')
+          if (existingCanvas) {
+            existingCanvas.remove()
           }
 
           window.L2Dwidget.init({
@@ -85,7 +92,7 @@ const Live2D = () => {
               canvasElement.style.transform = 'none'
               canvasElement.style.width = '112px'
               canvasElement.style.height = '112px'
-              canvasElement.style.zIndex = '999999' // 进一步提高z-index
+              canvasElement.style.zIndex = '999999'
               canvasElement.style.pointerEvents = 'auto'
               canvasElement.style.display = 'block'
               canvasElement.style.visibility = 'visible'
@@ -121,6 +128,14 @@ const Live2D = () => {
     }
 
     const loadScript = () => {
+      // 检查脚本是否已经存在
+      const existingScript = document.querySelector('script[src*="live2d-widget"]')
+      if (existingScript && window.L2Dwidget) {
+        initialized.current = true
+        initWidget()
+        return
+      }
+
       if (!scriptRef.current) {
         const script = document.createElement("script")
         script.src = "https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/autoload.js"
@@ -154,8 +169,13 @@ const Live2D = () => {
     }
 
     return () => {
-      if (window.L2Dwidget && window.L2Dwidget.clearWidget) {
-        window.L2Dwidget.clearWidget()
+      // 清理函数
+      if (window.L2Dwidget && typeof window.L2Dwidget.clearWidget === 'function') {
+        try {
+          window.L2Dwidget.clearWidget()
+        } catch (error) {
+          console.warn('Error clearing Live2D widget:', error)
+        }
       }
     }
   }, [pathname, isMobile, isClient])

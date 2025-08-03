@@ -5,7 +5,22 @@ import { useLanguage } from '@/contexts/language-context'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Github, Globe } from 'lucide-react'
-import type { Project } from '@/types/project'
+
+// 定义项目接口，与数据库字段保持一致
+interface Project {
+  id: string
+  title: string
+  slug: string
+  description: string
+  content?: string
+  tech_stack: string[]  // 使用数据库中的字段名
+  github_url?: string
+  demo_url?: string
+  featured_image?: string
+  status: string
+  created_at: string
+  updated_at: string
+}
 
 export default function Portfolio() {
   const { t } = useLanguage()
@@ -16,11 +31,11 @@ export default function Portfolio() {
     const fetchProjects = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/projects')
+        const response = await fetch('/api/projects?status=completed')
         if (response.ok) {
           const data = await response.json()
           if (data.success) {
-            setProjects(data.data)
+            setProjects(data.data || [])
           }
         }
       } catch (error) {
@@ -48,7 +63,7 @@ export default function Portfolio() {
           <div key={project.id} className="bg-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
             <div className="relative h-48">
               <Image
-                src={project.featuredImage || "/placeholder.svg"}
+                src={project.featured_image || "/placeholder.svg"}
                 alt={project.title}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -61,7 +76,8 @@ export default function Portfolio() {
               <p className="text-muted-foreground mb-4">{project.description}</p>
               
               <div className="flex flex-wrap gap-2 mb-4">
-                {project.technologies.map((tech: string) => (
+                {/* 添加防护逻辑，确保 tech_stack 存在且是数组 */}
+                {(project.tech_stack && Array.isArray(project.tech_stack) ? project.tech_stack : []).map((tech: string) => (
                   <span
                     key={tech}
                     className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
@@ -72,9 +88,9 @@ export default function Portfolio() {
               </div>
               
               <div className="flex gap-4">
-                {project.githubUrl && (
+                {project.github_url && (
                   <Link
-                    href={project.githubUrl}
+                    href={project.github_url}
                     className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
                     target="_blank"
                   >
@@ -82,14 +98,14 @@ export default function Portfolio() {
                     <span>GitHub</span>
                   </Link>
                 )}
-                {project.demoUrl && (
+                {project.demo_url && (
                   <Link
-                    href={project.demoUrl}
+                    href={project.demo_url}
                     className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
                     target="_blank"
                   >
                     <Globe className="h-5 w-5" />
-                    <span>{t('portfolio.visit')}</span>
+                    <span>访问项目</span>
                   </Link>
                 )}
               </div>

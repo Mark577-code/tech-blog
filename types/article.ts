@@ -3,17 +3,19 @@ export interface Article {
   title: string
   slug: string
   content: string
-  excerpt: string
+  summary: string  // 改用summary而不是excerpt
   category: string
   tags: string[]
-  status: 'draft' | 'published'
-  createdAt: string
-  updatedAt: string
+  status: 'draft' | 'published' | 'archived'
+  created_at: string  // 使用蛇形命名匹配数据库
+  updated_at: string  // 使用蛇形命名匹配数据库
+  published_at: string  // 使用蛇形命名匹配数据库
   author: string
-  featuredImage: string
-  readingTime: number
-  viewCount: number
-  likes: number
+  featured_image: string | null  // 使用蛇形命名匹配数据库
+  read_time: number  // 使用蛇形命名匹配数据库
+  seo_title?: string | null
+  seo_description?: string | null
+  canonical_url?: string | null
 }
 
 export interface Category {
@@ -22,8 +24,8 @@ export interface Category {
   slug: string
   description?: string
   color?: string
-  createdAt: string
-  updatedAt: string
+  created_at: string
+  updated_at: string
 }
 
 export interface Tag {
@@ -37,11 +39,11 @@ export interface Tag {
 export interface CreateArticleData {
   title: string
   content: string
-  excerpt?: string
+  summary?: string
   category: string
   tags: string[]
-  status: 'draft' | 'published'
-  featuredImage?: string
+  status: 'draft' | 'published' | 'archived'
+  featured_image?: string
 }
 
 export interface UpdateArticleData extends Partial<CreateArticleData> {
@@ -51,11 +53,11 @@ export interface UpdateArticleData extends Partial<CreateArticleData> {
 export interface ArticleFilters {
   category?: string
   tags?: string[]
-  status?: 'draft' | 'published' | 'all'
+  status?: 'draft' | 'published' | 'archived' | 'all'
   search?: string
   page?: number
   limit?: number
-  sortBy?: 'createdAt' | 'updatedAt' | 'title' | 'viewCount'
+  sortBy?: 'created_at' | 'updated_at' | 'title' | 'read_time'
   sortOrder?: 'asc' | 'desc'
 }
 
@@ -85,7 +87,7 @@ export interface User {
   username: string
   email?: string
   role: 'admin'
-  createdAt: string
+  created_at: string
 }
 
 export interface LoginCredentials {

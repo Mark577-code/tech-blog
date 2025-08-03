@@ -110,17 +110,25 @@ function generateId(): string {
 /**
  * 计算阅读时间（分钟）
  */
-function calculateReadingTime(content: string): number {
-  const wordsPerMinute = 200
-  const words = content.trim().split(/\s+/).length
-  return Math.ceil(words / wordsPerMinute)
+export function calculateReadTime(content: string): number {
+  const wordsPerMinute = 200 // 平均每分钟阅读200字
+  const words = content.split(/\s+/).length
+  return Math.ceil(words / wordsPerMinute) || 1
 }
 
 /**
  * 生成文章摘要
  */
-function generateExcerpt(content: string, maxLength: number = 150): string {
-  const text = content.replace(/#+\s/g, '').replace(/\*+/g, '').replace(/`+/g, '')
+export function generateSummary(content: string, maxLength: number = 200): string {
+  // 移除 Markdown 语法
+  const text = content
+    .replace(/#+\s/g, '') // 移除标题标记
+    .replace(/\*+/g, '') // 移除粗体斜体标记
+    .replace(/`+/g, '') // 移除代码标记
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // 移除链接，保留文本
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '') // 移除图片
+    .trim()
+  
   if (text.length <= maxLength) return text
   return text.substr(0, maxLength).replace(/\s+\S*$/, '') + '...'
 }
@@ -158,6 +166,62 @@ function getDefaultCategories(): Category[] {
       updatedAt: new Date().toISOString()
     }
   ]
+}
+
+/**
+ * 创建slug - 支持中文并确保唯一性
+ */
+export function createSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    // 将中文字符转换为拼音或保留原字符
+    .replace(/[\s\W-]+/g, '-') // 将空格和特殊字符替换为连字符
+    .replace(/^-+|-+$/g, '') // 移除开头和结尾的连字符
+    .replace(/-+/g, '-') // 将多个连字符合并为一个
+    || 'untitled' // 如果结果为空，使用默认值
+}
+
+// 生成唯一slug - 检查数据库中是否已存在
+export async function generateUniqueSlug(title: string, supabase: any, excludeId?: string): Promise<string> {
+  let baseSlug = createSlug(title)
+  let slug = baseSlug
+  let counter = 1
+  
+  while (true) {
+    // 检查slug是否已存在
+    let query = supabase
+      .from('articles')
+      .select('id')
+      .eq('slug', slug)
+    
+    // 如果是更新操作，排除当前文章
+    if (excludeId) {
+      query = query.neq('id', excludeId)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) {
+      console.error('检查slug唯一性时出错:', error)
+      // 如果检查出错，添加时间戳确保唯一性
+      return `${baseSlug}-${Date.now()}`
+    }
+    
+    // 如果没有找到重复的slug，返回当前slug
+    if (!data || data.length === 0) {
+      return slug
+    }
+    
+    // 如果找到重复，生成新的slug
+    slug = `${baseSlug}-${counter}`
+    counter++
+    
+    // 防止无限循环，最多尝试100次
+    if (counter > 100) {
+      return `${baseSlug}-${Date.now()}`
+    }
+  }
 }
 
 /**
@@ -265,7 +329,7 @@ export async function createArticle(data: CreateArticleData, author: string): Pr
     title: data.title,
     slug,
     content: data.content,
-    excerpt: data.excerpt || generateExcerpt(data.content),
+    excerpt: data.excerpt || generateSummary(data.content),
     category: data.category,
     tags: data.tags,
     status: data.status,
@@ -273,7 +337,7 @@ export async function createArticle(data: CreateArticleData, author: string): Pr
     updatedAt: now,
     author,
     featuredImage: data.featuredImage || '',
-    readingTime: calculateReadingTime(data.content),
+    readingTime: calculateReadTime(data.content),
     viewCount: 0,
     likes: 0
   }
@@ -305,8 +369,8 @@ export async function updateArticle(data: UpdateArticleData): Promise<Article | 
     id: existingArticle.id, // 确保ID不被覆盖
     createdAt: existingArticle.createdAt, // 保持创建时间
     updatedAt: new Date().toISOString(),
-    readingTime: data.content ? calculateReadingTime(data.content) : existingArticle.readingTime,
-    excerpt: data.excerpt || (data.content ? generateExcerpt(data.content) : existingArticle.excerpt),
+    readingTime: data.content ? calculateReadTime(data.content) : existingArticle.readingTime,
+    excerpt: data.excerpt || (data.content ? generateSummary(data.content) : existingArticle.excerpt),
     slug: data.title ? generateSlug(data.title) : existingArticle.slug,
     featuredImage: data.featuredImage !== undefined ? data.featuredImage : existingArticle.featuredImage,
     viewCount: existingArticle.viewCount || 0,

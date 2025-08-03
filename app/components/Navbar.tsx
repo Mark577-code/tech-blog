@@ -13,7 +13,7 @@ const Navbar = () => {
   const { t, toggleLanguage } = useLanguage()
   const [categories, setCategories] = useState<Category[]>([])
   const [showArticleDropdown, setShowArticleDropdown] = useState(false)
-  const [showSidebar, setShowSidebar] = useState(false)
+
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -38,20 +38,7 @@ const Navbar = () => {
     fetchCategories()
   }, [])
 
-  // 监听滚动，判断是否显示侧边栏
-  useEffect(() => {
-    if (!mounted) return
 
-    const handleScroll = () => {
-      const scrollY = window.scrollY
-      const viewportHeight = window.innerHeight
-      // 当滚动超过首页区域50%时显示侧边栏（适应70vh的首页高度）
-      setShowSidebar(scrollY > viewportHeight * 0.5)
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [mounted])
 
   return (
     <>
@@ -84,11 +71,11 @@ const Navbar = () => {
               {/* 下拉菜单 */}
               {showArticleDropdown && (
                 <div 
-                  className="absolute top-full left-0 mt-2 w-48 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg py-2 z-50"
+                  className="absolute top-full left-0 mt-2 w-48 bg-background/85 backdrop-blur-sm border rounded-lg shadow-lg py-2 z-50"
                   onMouseEnter={() => setShowArticleDropdown(true)}
                   onMouseLeave={() => setShowArticleDropdown(false)}
                 >
-                  <Link href="/articles" className="block p-4 hover:bg-muted text-sm">
+                  <Link href="/blog" className="block p-4 hover:bg-muted text-sm">
                     全部文章
                   </Link>
                   {categories.map((category) => (
@@ -145,80 +132,7 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* 左侧个人信息卡片 - 只在文章区域显示 */}
-      {showSidebar && (
-        <div className="fixed left-2 top-1/2 transform -translate-y-1/2 w-56 bg-background/95 backdrop-blur-sm border rounded-2xl shadow-lg z-40 hidden lg:block transition-all duration-300">
-          <div className="p-6">
-            {/* 个人介绍 */}
-            <div className="text-center mb-4">
-              <div className="w-16 h-16 rounded-full border-2 border-primary/20 overflow-hidden mx-auto mb-3 bg-primary/10">
-                <img 
-                  src="/头像.png" 
-                  alt="Mark-李"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // 如果图片加载失败，尝试其他头像路径
-                    const target = e.target as HTMLImageElement
-                    if (target.src.includes('头像.png')) {
-                      target.src = '/avatar.svg'
-                    } else if (target.src.includes('avatar.svg')) {
-                      target.src = '/placeholder.svg'
-                    } else {
-                      // 最后备选，显示默认图标
-                      target.style.display = 'none'
-                      const fallback = target.nextElementSibling as HTMLElement
-                      if (fallback) fallback.style.display = 'flex'
-                    }
-                  }}
-                />
-                <div className="w-full h-full bg-primary/20 flex items-center justify-center" style={{display: 'none'}}>
-                  <User className="h-7 w-7 text-primary" />
-                </div>
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Mark-李</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                技术爱好者和软件开发者
-              </p>
-              
-              {/* 社交链接 - 横向展示 */}
-              <div className="flex justify-center gap-4 mb-4">
-                <a
-                  href="https://music.163.com/#/user/home?id=1857158786"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                  title="网易云音乐"
-                >
-                  <Music className="h-5 w-5 text-red-500" />
-                </a>
-                <a
-                  href="https://github.com/Mark577-code"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                  title="GitHub"
-                >
-                  <Github className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-                </a>
-              </div>
-              
-              {/* 邮箱文字 - 增加显示空间 */}
-              <div className="bg-muted/50 rounded-lg p-3 mb-4">
-                <p className="text-xs text-muted-foreground break-all">
-                  a3449322892@gmail.com
-                </p>
-              </div>
-            </div>
 
-            {/* Live2D 容器 */}
-            <div className="flex justify-center">
-              <div id="live2d-container" className="w-28 h-28 relative" style={{zIndex: 99999}}>
-                {/* Live2D 将在这里渲染 */}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
     </>
   )

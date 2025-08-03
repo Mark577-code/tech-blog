@@ -86,16 +86,59 @@ export interface GalleryImage {
   updated_at: string
 }
 
+export interface Image {
+  id: string
+  filename: string
+  original_name: string
+  file_path: string
+  file_url: string
+  file_size: number
+  width?: number
+  height?: number
+  mime_type: string
+  alt_text?: string
+  title?: string
+  description?: string
+  tags?: string[]
+  category: string
+  usage_type: 'avatar' | 'featured' | 'gallery' | 'content' | 'general'
+  is_public: boolean
+  uploaded_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateImageData {
+  filename: string
+  original_name: string
+  file_path: string
+  file_url: string
+  file_size: number
+  width?: number
+  height?: number
+  mime_type: string
+  alt_text?: string
+  title?: string
+  description?: string
+  tags?: string[]
+  category?: string
+  usage_type?: 'avatar' | 'featured' | 'gallery' | 'content' | 'general'
+  is_public?: boolean
+  uploaded_by?: string
+}
+
 // 数据库操作封装
 export const dbOperations = {
   // 文章操作
   articles: {
-    getAll: async () => {
-      const { data, error } = await supabase
-        .from('articles')
-        .select('*')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false })
+    getAll: async (status?: 'published' | 'draft' | 'all') => {
+      let query = supabase.from('articles').select('*')
+      
+      if (status && status !== 'all') {
+        query = query.eq('status', status)
+      }
+      
+      const { data, error } = await query.order('published_at', { ascending: false })
       
       if (error) throw error
       return data
@@ -197,15 +240,20 @@ export const dbOperations = {
   
   // 项目操作
   projects: {
-    getAll: async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('status', 'completed')
-        .order('created_at', { ascending: false })
+    getAll: async (status?: string) => {
+      let query = supabase.from('projects').select('*')
+      
+      // 如果没有指定状态，默认返回已完成的项目
+      if (status && status !== 'all') {
+        query = query.eq('status', status)
+      } else if (!status) {
+        query = query.eq('status', 'completed')
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false })
       
       if (error) throw error
-      return data
+      return data || []
     }
   },
   
@@ -216,6 +264,93 @@ export const dbOperations = {
         .from('gallery_images')
         .select('*')
         .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    }
+  },
+
+  // 图片操作
+  images: {
+    getAll: async (category?: string, usageType?: string) => {
+      let query = supabase.from('images').select('*').eq('is_public', true)
+      
+      if (category) {
+        query = query.eq('category', category)
+      }
+      
+      if (usageType) {
+        query = query.eq('usage_type', usageType)
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    },
+    
+    getById: async (id: string) => {
+      const { data, error } = await supabase
+        .from('images')
+        .select('*')
+        .eq('id', id)
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+    
+    create: async (imageData: CreateImageData) => {
+      const { data, error } = await supabaseAdmin
+        .from('images')
+        .insert({
+          ...imageData,
+          category: imageData.category || 'general',
+          usage_type: imageData.usage_type || 'general',
+          is_public: imageData.is_public ?? true,
+          uploaded_by: imageData.uploaded_by || 'admin'
+        })
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+    
+    update: async (id: string, updates: Partial<CreateImageData>) => {
+      const { data, error } = await supabaseAdmin
+        .from('images')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+    
+    delete: async (id: string) => {
+      const { error } = await supabaseAdmin
+        .from('images')
+        .delete()
+        .eq('id', id)
+      
+      if (error) throw error
+    },
+    
+    getByUsageType: async (usageType: string, limit?: number) => {
+      let query = supabase
+        .from('images')
+        .select('*')
+        .eq('usage_type', usageType)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+      
+      if (limit) {
+        query = query.limit(limit)
+      }
+      
+      const { data, error } = await query
       
       if (error) throw error
       return data

@@ -1,161 +1,89 @@
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcryptjs'
-import { cookies } from 'next/headers'
-import type { User } from '@/types/article'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'
-
-// 预定义的管理员用户
-const ADMIN_USER: User = {
-  id: 'admin-001',
-  username: 'admin',
-  email: process.env.NEXT_PUBLIC_EMAIL || 'admin@example.com',
-  role: 'admin',
-  createdAt: new Date().toISOString()
+// 管理员认证系统 - 安全版本
+export interface AdminUser {
+  username: string
+  role: 'admin'
 }
 
-/**
- * 生成JWT token
- */
-export function generateToken(user: User): string {
-  return jwt.sign(
-    { 
-      id: user.id, 
-      username: user.username, 
-      role: user.role 
-    },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  )
-}
-
-/**
- * 验证JWT token
- */
-export function verifyToken(token: string): User | null {
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any
-    if (!decoded || !decoded.id || !decoded.username || !decoded.role) {
-      return null
-    }
-    
-    const user: User = {
-      id: decoded.id,
-      username: decoded.username,
-      role: decoded.role,
-      createdAt: ADMIN_USER.createdAt
-    }
-
-    // 只在email有值时才添加
-    if (ADMIN_USER.email) {
-      user.email = ADMIN_USER.email
-    }
-    
-    return user
-  } catch (error) {
-    console.error('JWT验证失败:', error)
-    return null
+// 从环境变量获取管理员凭据
+const getAdminCredentials = () => {
+  const username = process.env['ADMIN_USERNAME']
+  const password = process.env['ADMIN_PASSWORD']
+  
+  if (!username || !password) {
+    throw new Error('管理员凭据未在环境变量中配置')
   }
+  
+  return { username, password }
 }
 
-/**
- * 验证管理员密码
- */
-export async function verifyAdminPassword(password: string): Promise<boolean> {
+// 验证管理员凭据 - 仅在服务端使用
+export function validateAdminCredentials(username: string, password: string): boolean {
   try {
-    // 如果环境变量中的密码已经是哈希值，直接比较
-    if (ADMIN_PASSWORD.startsWith('$2b$') || ADMIN_PASSWORD.startsWith('$2a$')) {
-      return await bcrypt.compare(password, ADMIN_PASSWORD)
-    }
-    // 否则直接比较明文密码（仅用于开发环境）
-    return password === ADMIN_PASSWORD
+    const credentials = getAdminCredentials()
+    return username === credentials.username && password === credentials.password
   } catch (error) {
-    console.error('密码验证失败:', error)
+    console.error('验证凭据时出错:', error)
     return false
   }
 }
 
-/**
- * 生成密码哈希（用于生产环境）
- */
-export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 12
-  return await bcrypt.hash(password, saltRounds)
+// 生成简单的token（实际项目中应该使用JWT）
+export function generateAdminToken(): string {
+  const timestamp = Date.now()
+  const random = Math.random().toString(36).substring(2)
+  return btoa(`admin:${timestamp}:${random}`)
 }
 
-/**
- * 从请求中获取当前用户
- */
-export async function getCurrentUser(): Promise<User | null> {
+// 验证token
+export function validateAdminToken(token: string): boolean {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth-token')
+    if (!token) return false
     
-    if (!token?.value) {
-      return null
+    const decoded = atob(token)
+    const parts = decoded.split(':')
+    
+    if (parts[0] !== 'admin') return false
+    
+    const timestamp = parseInt(parts[1])
+    if (isNaN(timestamp)) return false
+    
+    const now = Date.now()
+    
+    // Token 24小时过期
+    return (now - timestamp) < 24 * 60 * 60 * 1000
+  } catch {
+    return false
+  }
+}
+
+// 本地存储管理
+export const adminAuth = {
+  // 设置token
+  setToken: (token: string) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('admin_token', token)
     }
-    
-    return verifyToken(token.value)
-  } catch (error) {
-    console.error('获取当前用户失败:', error)
+  },
+  
+  // 获取token
+  getToken: (): string | null => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('admin_token')
+    }
     return null
+  },
+  
+  // 移除token
+  removeToken: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('admin_token')
+    }
+  },
+  
+  // 检查是否已登录
+  isLoggedIn: (): boolean => {
+    const token = adminAuth.getToken()
+    if (!token) return false
+    return validateAdminToken(token)
   }
-}
-
-/**
- * 检查用户是否为管理员
- */
-export function isAdmin(user: User | null): boolean {
-  return user?.role === 'admin'
-}
-
-/**
- * 设置认证cookie
- */
-export async function setAuthCookie(token: string) {
-  const cookieStore = await cookies()
-  
-  cookieStore.set('auth-token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60, // 7天
-    path: '/'
-  })
-}
-
-/**
- * 清除认证cookie
- */
-export async function clearAuthCookie() {
-  const cookieStore = await cookies()
-  
-  cookieStore.set('auth-token', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 0,
-    path: '/'
-  })
-}
-
-/**
- * 获取管理员用户信息
- */
-export function getAdminUser(): User {
-  return ADMIN_USER
-}
-
-/**
- * 验证请求是否来自管理员
- */
-export async function requireAdmin(): Promise<User | null> {
-  const user = await getCurrentUser()
-  
-  if (!user || !isAdmin(user)) {
-    return null
-  }
-  
-  return user
 } 

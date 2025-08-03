@@ -1,1 +1,2 @@
-# 保持uploads目录被git跟踪，但不跟踪实际的上传文件 
+# 保持uploads目录结构
+# 此文件确保uploads目录被git跟踪，即使目录为空 
