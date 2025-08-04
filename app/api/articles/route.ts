@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     const { title, content, summary, category, tags, status, featured_image } = body
 
     // 生成唯一slug
-    const slug = await generateUniqueSlug(title, supabaseAdmin)
+    const slug = await generateUniqueSlug(title)
     console.log('🔗 生成的slug:', slug)
 
     // 计算阅读时间
@@ -185,7 +185,7 @@ export async function PUT(request: NextRequest) {
     // 生成新的slug（如果标题改变了）
     let slug = originalArticle.slug
     if (title && title.trim() !== originalArticle.title) {
-      slug = await generateUniqueSlug(title, supabaseAdmin, id)
+      slug = await generateUniqueSlug(title, id)
       console.log('🔗 更新的slug:', slug)
     }
 
