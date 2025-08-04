@@ -251,19 +251,19 @@ export async function getAllArticles(filters: ArticleFilters = {}): Promise<Pagi
     filteredArticles = filteredArticles.filter(article =>
       article.title.toLowerCase().includes(searchLower) ||
       article.content.toLowerCase().includes(searchLower) ||
-      article.excerpt.toLowerCase().includes(searchLower)
+      article.summary.toLowerCase().includes(searchLower)
     )
   }
 
   // 排序
-  const sortBy = filters.sortBy || 'createdAt'
+  const sortBy = filters.sortBy || 'created_at'
   const sortOrder = filters.sortOrder || 'desc'
   
   filteredArticles.sort((a, b) => {
     let aValue = a[sortBy] as any
     let bValue = b[sortBy] as any
     
-    if (sortBy === 'createdAt' || sortBy === 'updatedAt') {
+    if (sortBy === 'created_at' || sortBy === 'updated_at') {
       aValue = new Date(aValue).getTime()
       bValue = new Date(bValue).getTime()
     }
@@ -329,17 +329,21 @@ export async function createArticle(data: CreateArticleData, author: string): Pr
     title: data.title,
     slug,
     content: data.content,
-    excerpt: data.excerpt || generateSummary(data.content),
+    summary: data.summary || generateSummary(data.content),
     category: data.category,
     tags: data.tags,
     status: data.status,
-    createdAt: now,
-    updatedAt: now,
+    created_at: now,
+    updated_at: now,
+    published_at: now,
     author,
-    featuredImage: data.featuredImage || '',
-    readingTime: calculateReadTime(data.content),
-    viewCount: 0,
-    likes: 0
+    featured_image: data.featured_image || '',
+    read_time: calculateReadTime(data.content),
+    view_count: 0,
+    likes: 0,
+    seo_title: data.seo_title,
+    seo_description: data.seo_description,
+    canonical_url: data.canonical_url
   }
   
   articles.unshift(article) // 新文章放在前面
@@ -367,12 +371,12 @@ export async function updateArticle(data: UpdateArticleData): Promise<Article | 
     ...existingArticle,
     ...data,
     id: existingArticle.id, // 确保ID不被覆盖
-    createdAt: existingArticle.createdAt, // 保持创建时间
-    updatedAt: new Date().toISOString(),
-    readingTime: data.content ? calculateReadTime(data.content) : existingArticle.readingTime,
-    excerpt: data.excerpt || (data.content ? generateSummary(data.content) : existingArticle.excerpt),
+    created_at: existingArticle.created_at, // 保持创建时间
+    updated_at: new Date().toISOString(),
+    read_time: data.content ? calculateReadTime(data.content) : existingArticle.read_time,
+    summary: data.summary || (data.content ? generateSummary(data.content) : existingArticle.summary),
     slug: data.title ? generateSlug(data.title) : existingArticle.slug,
-    featuredImage: data.featuredImage !== undefined ? data.featuredImage : existingArticle.featuredImage,
+    featured_image: data.featured_image !== undefined ? data.featured_image : existingArticle.featured_image,
     viewCount: existingArticle.viewCount || 0,
     likes: existingArticle.likes || 0
   }

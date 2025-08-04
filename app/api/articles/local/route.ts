@@ -34,13 +34,13 @@ export async function GET(request: NextRequest) {
       filteredArticles = filteredArticles.filter((article: any) =>
         article.title.toLowerCase().includes(searchLower) ||
         article.content.toLowerCase().includes(searchLower) ||
-        article.excerpt.toLowerCase().includes(searchLower)
+        article.summary.toLowerCase().includes(searchLower)
       )
     }
 
     // 排序（按创建时间倒序）
     filteredArticles.sort((a: any, b: any) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )
 
     // 分页

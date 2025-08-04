@@ -27,11 +27,11 @@ class ArticleProcessor {
 - **分类**: ${article.category}
 - **标签**: ${article.tags.join(', ')}
 - **作者**: ${article.author || '博客作者'}
-- **发布时间**: ${article.updatedAt}
+- **发布时间**: ${article.updated_at}
 - **文章链接**: ${baseUrl}/articles/${article.slug}
 
 ## 📝 摘要
-${article.excerpt || '这是一篇关于' + article.category + '的技术文章。'}
+${article.summary || '这是一篇关于' + article.category + '的技术文章。'}
 
 ## 📖 正文内容
 
@@ -52,9 +52,9 @@ ${article.tags.map(tag => `#${tag}`).join(' ')}
         category: article.category,
         tags: article.tags,
         author: article.author || '博客作者',
-        publishedAt: article.updatedAt,
+        publishedAt: article.updated_at,
         url: `${baseUrl}/articles/${article.slug}`,
-        summary: article.excerpt
+        summary: article.summary
       }
     }
   }
