@@ -33,11 +33,11 @@ export default function BlogHome() {
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const handleScroll = () => setScrollY(window.scrollY)
-    if (typeof window !== 'undefined') {
-      window.addEventListener("scroll", handleScroll)
-      return () => window.removeEventListener("scroll", handleScroll)
-    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   useEffect(() => {
