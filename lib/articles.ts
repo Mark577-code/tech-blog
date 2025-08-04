@@ -144,8 +144,8 @@ function getDefaultCategories(): Category[] {
       slug: 'technology',
       description: '编程、开发、技术相关文章',
       color: '#3b82f6',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
       id: 'life',
@@ -153,8 +153,8 @@ function getDefaultCategories(): Category[] {
       slug: 'life',
       description: '日常生活、思考、随笔',
       color: '#10b981',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
       id: 'project',
@@ -162,8 +162,8 @@ function getDefaultCategories(): Category[] {
       slug: 'projects',
       description: '项目开发、经验分享',
       color: '#f59e0b',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ]
 }
