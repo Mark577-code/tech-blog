@@ -42,7 +42,7 @@ export default function PhotographyPage() {
                   </div>
                 ))}
                 <h3 className="font-medium">{article.title}</h3>
-                <p className="text-sm text-muted-foreground">{new Date(article.publishedAt).toLocaleDateString()}</p>
+                <p className="text-sm text-muted-foreground">{new Date(article.published_at).toLocaleDateString()}</p>
               </div>
             </CardContent>
           </Card>

@@ -136,10 +136,10 @@ export default function ArticlesPage() {
               <CardContent className="p-0">
                 <Link href={`/articles/${article.slug}`} className="block">
                   <div className="flex flex-col md:flex-row">
-                    {article.featuredImage && (
+                    {article.featured_image && (
                       <div className="relative w-full md:w-64 h-48">
                         <Image
-                          src={article.featuredImage || "/placeholder.svg"}
+                          src={article.featured_image || "/placeholder.svg"}
                           alt={article.title}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 256px, 256px"
@@ -155,9 +155,9 @@ export default function ArticlesPage() {
                           {getCategoryLabel(article.category)}
                         </Badge>
                         <span>•</span>
-                        <span>{formatDate(article.createdAt)}</span>
+                        <span>{formatDate(article.created_at)}</span>
                         <span>•</span>
-                        <span>{article.readingTime} 分钟阅读</span>
+                        <span>{article.read_time} 分钟阅读</span>
                       </div>
                       
                       <h2 className="text-2xl font-bold mb-2 text-foreground hover:text-primary transition-colors">
@@ -165,7 +165,7 @@ export default function ArticlesPage() {
                       </h2>
                       
                       <p className="text-muted-foreground mb-4 line-clamp-3">
-                        {article.excerpt}
+                        {article.summary}
                       </p>
 
                       {article.tags.length > 0 && (
