@@ -1,171 +1,44 @@
-import fs from 'fs/promises'
-import path from 'path'
-import type { 
-  Article, 
-  CreateArticleData, 
-  UpdateArticleData, 
-  ArticleFilters,
-  PaginatedArticles,
-  Category,
-  Tag
-} from '@/types/article'
-
-const DATA_DIR = path.join(process.cwd(), 'data')
-const ARTICLES_FILE = path.join(DATA_DIR, 'articles.json')
-const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json')
-const TAGS_FILE = path.join(DATA_DIR, 'tags.json')
-
-/**
- * 确保数据目录存在
- */
-async function ensureDataDir() {
-  try {
-    await fs.access(DATA_DIR)
-  } catch {
-    await fs.mkdir(DATA_DIR, { recursive: true })
-  }
-}
-
-/**
- * 读取文章数据
- */
-async function readArticles(): Promise<Article[]> {
-  try {
-    await ensureDataDir()
-    const data = await fs.readFile(ARTICLES_FILE, 'utf-8')
-    return JSON.parse(data)
-  } catch {
-    return []
-  }
-}
-
-/**
- * 写入文章数据
- */
-async function writeArticles(articles: Article[]): Promise<void> {
-  await ensureDataDir()
-  await fs.writeFile(ARTICLES_FILE, JSON.stringify(articles, null, 2), 'utf-8')
-}
-
-/**
- * 读取分类数据
- */
-async function readCategories(): Promise<Category[]> {
-  try {
-    await ensureDataDir()
-    const data = await fs.readFile(CATEGORIES_FILE, 'utf-8')
-    return JSON.parse(data)
-  } catch {
-    return getDefaultCategories()
-  }
-}
-
-/**
- * 写入分类数据
- */
-async function writeCategories(categories: Category[]): Promise<void> {
-  await ensureDataDir()
-  await fs.writeFile(CATEGORIES_FILE, JSON.stringify(categories, null, 2), 'utf-8')
-}
-
-/**
- * 读取标签数据
- */
-async function readTags(): Promise<Tag[]> {
-  try {
-    await ensureDataDir()
-    const data = await fs.readFile(TAGS_FILE, 'utf-8')
-    return JSON.parse(data)
-  } catch {
-    return []
-  }
-}
-
-/**
- * 写入标签数据
- */
-async function writeTags(tags: Tag[]): Promise<void> {
-  await ensureDataDir()
-  await fs.writeFile(TAGS_FILE, JSON.stringify(tags, null, 2), 'utf-8')
-}
-
-/**
- * 生成URL友好的slug
- */
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
-/**
- * 生成唯一ID
- */
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2)
-}
+import { supabase } from './supabase'
 
 /**
  * 计算阅读时间（分钟）
  */
 export function calculateReadTime(content: string): number {
-  const wordsPerMinute = 200 // 平均每分钟阅读200字
-  const words = content.split(/\s+/).length
-  return Math.ceil(words / wordsPerMinute) || 1
+  const wordsPerMinute = 200 // 假设每分钟读200个中文字符
+  const wordCount = content.length
+  const readTime = Math.ceil(wordCount / wordsPerMinute)
+  return Math.max(1, readTime) // 最少1分钟
 }
 
 /**
  * 生成文章摘要
  */
 export function generateSummary(content: string, maxLength: number = 200): string {
-  // 移除 Markdown 语法
-  const text = content
-    .replace(/#+\s/g, '') // 移除标题标记
-    .replace(/\*+/g, '') // 移除粗体斜体标记
-    .replace(/`+/g, '') // 移除代码标记
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // 移除链接，保留文本
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '') // 移除图片
+  // 移除 Markdown 标记
+  const cleanContent = content
+    .replace(/#{1,6}\s+/g, '') // 移除标题标记
+    .replace(/\*\*(.*?)\*\*/g, '$1') // 移除粗体标记
+    .replace(/\*(.*?)\*/g, '$1') // 移除斜体标记
+    .replace(/`(.*?)`/g, '$1') // 移除代码标记
+    .replace(/\[(.*?)\]\(.*?\)/g, '$1') // 移除链接，保留文本
+    .replace(/!\[.*?\]\(.*?\)/g, '') // 移除图片
+    .replace(/>\s+/g, '') // 移除引用标记
+    .replace(/\n+/g, ' ') // 换行符替换为空格
     .trim()
-  
-  if (text.length <= maxLength) return text
-  return text.substr(0, maxLength).replace(/\s+\S*$/, '') + '...'
-}
 
-/**
- * 获取默认分类
- */
-function getDefaultCategories(): Category[] {
-  return [
-    {
-      id: 'tech',
-      name: '技术文章',
-      slug: 'technology',
-      description: '编程、开发、技术相关文章',
-      color: '#3b82f6',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'life',
-      name: '生活随笔',
-      slug: 'life',
-      description: '日常生活、思考、随笔',
-      color: '#10b981',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'project',
-      name: '项目经验',
-      slug: 'projects',
-      description: '项目开发、经验分享',
-      color: '#f59e0b',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ]
+  if (cleanContent.length <= maxLength) {
+    return cleanContent
+  }
+
+  // 截取指定长度，并在最后一个完整词处截断
+  const truncated = cleanContent.substring(0, maxLength)
+  const lastSpaceIndex = truncated.lastIndexOf(' ')
+  
+  if (lastSpaceIndex > maxLength * 0.8) {
+    return truncated.substring(0, lastSpaceIndex) + '...'
+  }
+  
+  return truncated + '...'
 }
 
 /**
@@ -175,25 +48,31 @@ export function createSlug(title: string): string {
   return title
     .toLowerCase()
     .trim()
-    // 将中文字符转换为拼音或保留原字符
-    .replace(/[\s\W-]+/g, '-') // 将空格和特殊字符替换为连字符
-    .replace(/^-+|-+$/g, '') // 移除开头和结尾的连字符
-    .replace(/-+/g, '-') // 将多个连字符合并为一个
-    || 'untitled' // 如果结果为空，使用默认值
+    // 移除特殊字符，保留中文、英文、数字、连字符
+    .replace(/[^\u4e00-\u9fa5a-z0-9\s-]/g, '')
+    // 空格替换为连字符
+    .replace(/\s+/g, '-')
+    // 多个连字符合并为一个
+    .replace(/-+/g, '-')
+    // 移除首尾连字符
+    .replace(/^-+|-+$/g, '')
 }
 
-// 生成唯一slug - 检查数据库中是否已存在
-export async function generateUniqueSlug(title: string, supabase: any, excludeId?: string): Promise<string> {
-  let baseSlug = createSlug(title)
+/**
+ * 生成唯一slug
+ */
+export async function generateUniqueSlug(title: string, excludeId?: string): Promise<string> {
+  const baseSlug = createSlug(title)
   let slug = baseSlug
   let counter = 1
-  
+
+  // 检查slug是否已存在
   while (true) {
-    // 检查slug是否已存在
     let query = supabase
       .from('articles')
       .select('id')
       .eq('slug', slug)
+      .limit(1)
     
     // 如果是更新操作，排除当前文章
     if (excludeId) {
@@ -225,236 +104,36 @@ export async function generateUniqueSlug(title: string, supabase: any, excludeId
 }
 
 /**
- * 获取所有文章
+ * 获取默认分类数据
  */
-export async function getAllArticles(filters: ArticleFilters = {}): Promise<PaginatedArticles> {
-  const articles = await readArticles()
-  let filteredArticles = [...articles]
-
-  // 应用筛选器
-  if (filters.status && filters.status !== 'all') {
-    filteredArticles = filteredArticles.filter(article => article.status === filters.status)
-  }
-
-  if (filters.category) {
-    filteredArticles = filteredArticles.filter(article => article.category === filters.category)
-  }
-
-  if (filters.tags && filters.tags.length > 0) {
-    filteredArticles = filteredArticles.filter(article =>
-      filters.tags!.some(tag => article.tags.includes(tag))
-    )
-  }
-
-  if (filters.search) {
-    const searchLower = filters.search.toLowerCase()
-    filteredArticles = filteredArticles.filter(article =>
-      article.title.toLowerCase().includes(searchLower) ||
-      article.content.toLowerCase().includes(searchLower) ||
-      article.summary.toLowerCase().includes(searchLower)
-    )
-  }
-
-  // 排序
-  const sortBy = filters.sortBy || 'created_at'
-  const sortOrder = filters.sortOrder || 'desc'
-  
-  filteredArticles.sort((a, b) => {
-    let aValue = a[sortBy] as any
-    let bValue = b[sortBy] as any
-    
-    if (sortBy === 'created_at' || sortBy === 'updated_at') {
-      aValue = new Date(aValue).getTime()
-      bValue = new Date(bValue).getTime()
+export function getCategories() {
+  return [
+    {
+      id: 'tech',
+      name: '技术文章',
+      slug: 'technology',
+      description: '编程、开发、技术相关文章',
+      color: '#3b82f6',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'life',
+      name: '生活随笔',
+      slug: 'life',
+      description: '日常生活、思考、随笔',
+      color: '#10b981',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'project',
+      name: '项目经验',
+      slug: 'projects',
+      description: '项目开发、经验分享',
+      color: '#f59e0b',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
-    
-    if (sortOrder === 'asc') {
-      return aValue > bValue ? 1 : -1
-    } else {
-      return aValue < bValue ? 1 : -1
-    }
-  })
-
-  // 分页
-  const page = filters.page || 1
-  const limit = filters.limit || 10
-  const startIndex = (page - 1) * limit
-  const endIndex = startIndex + limit
-  const paginatedArticles = filteredArticles.slice(startIndex, endIndex)
-
-  const total = filteredArticles.length
-  const totalPages = Math.ceil(total / limit)
-
-  return {
-    articles: paginatedArticles,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
-    }
-  }
-}
-
-/**
- * 根据ID获取文章
- */
-export async function getArticleById(id: string): Promise<Article | null> {
-  const articles = await readArticles()
-  return articles.find(article => article.id === id) || null
-}
-
-/**
- * 根据slug获取文章
- */
-export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  const articles = await readArticles()
-  return articles.find(article => article.slug === slug) || null
-}
-
-/**
- * 创建新文章
- */
-export async function createArticle(data: CreateArticleData, author: string): Promise<Article> {
-  const articles = await readArticles()
-  
-  const id = generateId()
-  const slug = generateSlug(data.title)
-  const now = new Date().toISOString()
-  
-  const article: Article = {
-    id,
-    title: data.title,
-    slug,
-    content: data.content,
-    summary: data.summary || generateSummary(data.content),
-    category: data.category,
-    tags: data.tags,
-    status: data.status,
-    created_at: now,
-    updated_at: now,
-    published_at: now,
-    author,
-    featured_image: data.featured_image || '',
-    read_time: calculateReadTime(data.content),
-    view_count: 0,
-    likes: 0,
-    seo_title: data.seo_title,
-    seo_description: data.seo_description,
-    canonical_url: data.canonical_url
-  }
-  
-  articles.unshift(article) // 新文章放在前面
-  await writeArticles(articles)
-  
-  // 更新标签统计
-  await updateTagCounts()
-  
-  return article
-}
-
-/**
- * 更新文章
- */
-export async function updateArticle(data: UpdateArticleData): Promise<Article | null> {
-  const articles = await readArticles()
-  const index = articles.findIndex(article => article.id === data.id)
-  
-  if (index === -1) {
-    return null
-  }
-  
-  const existingArticle = articles[index]!
-  const updatedArticle: Article = {
-    ...existingArticle,
-    ...data,
-    id: existingArticle.id, // 确保ID不被覆盖
-    created_at: existingArticle.created_at, // 保持创建时间
-    updated_at: new Date().toISOString(),
-    read_time: data.content ? calculateReadTime(data.content) : existingArticle.read_time,
-    summary: data.summary || (data.content ? generateSummary(data.content) : existingArticle.summary),
-    slug: data.title ? generateSlug(data.title) : existingArticle.slug,
-    featured_image: data.featured_image !== undefined ? data.featured_image : existingArticle.featured_image,
-    view_count: existingArticle.view_count || 0,
-    likes: existingArticle.likes || 0
-  }
-  
-  articles[index] = updatedArticle
-  await writeArticles(articles)
-  
-  // 更新标签统计
-  await updateTagCounts()
-  
-  return updatedArticle
-}
-
-/**
- * 删除文章
- */
-export async function deleteArticle(id: string): Promise<boolean> {
-  const articles = await readArticles()
-  const filteredArticles = articles.filter(article => article.id !== id)
-  
-  if (filteredArticles.length === articles.length) {
-    return false // 文章不存在
-  }
-  
-  await writeArticles(filteredArticles)
-  
-  // 更新标签统计
-  await updateTagCounts()
-  
-  return true
-}
-
-/**
- * 获取所有分类
- */
-export async function getAllCategories(): Promise<Category[]> {
-  return await readCategories()
-}
-
-/**
- * 获取所有标签
- */
-export async function getAllTags(): Promise<Tag[]> {
-  return await readTags()
-}
-
-/**
- * 更新标签统计
- */
-async function updateTagCounts(): Promise<void> {
-  const articles = await readArticles()
-  const tagCounts = new Map<string, number>()
-  
-  articles.forEach(article => {
-    article.tags.forEach(tag => {
-      tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1)
-    })
-  })
-  
-  const tags: Tag[] = Array.from(tagCounts.entries()).map(([name, count]) => ({
-    id: generateSlug(name),
-    name,
-    slug: generateSlug(name),
-    count
-  }))
-  
-  await writeTags(tags)
-}
-
-/**
- * 增加文章浏览量
- */
-export async function incrementViewCount(id: string): Promise<void> {
-  const articles = await readArticles()
-  const article = articles.find(a => a.id === id)
-  
-  if (article) {
-    article.view_count = (article.view_count || 0) + 1
-    await writeArticles(articles)
-  }
+  ]
 } 
