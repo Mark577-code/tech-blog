@@ -42,9 +42,12 @@ export function validateAdminToken(token: string): boolean {
     const decoded = atob(token)
     const parts = decoded.split(':')
     
-    if (parts[0] !== 'admin') return false
+    if (parts.length < 3 || parts[0] !== 'admin') return false
     
-    const timestamp = parseInt(parts[1])
+    const timestampStr = parts[1]
+    if (!timestampStr) return false
+    
+    const timestamp = parseInt(timestampStr)
     if (isNaN(timestamp)) return false
     
     const now = Date.now()
