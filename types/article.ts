@@ -13,6 +13,8 @@ export interface Article {
   author: string
   featured_image: string | null  // 使用蛇形命名匹配数据库
   read_time: number  // 使用蛇形命名匹配数据库
+  view_count?: number  // 浏览次数
+  likes?: number  // 点赞数
   seo_title?: string | null
   seo_description?: string | null
   canonical_url?: string | null

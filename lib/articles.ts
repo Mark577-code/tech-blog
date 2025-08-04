@@ -377,7 +377,7 @@ export async function updateArticle(data: UpdateArticleData): Promise<Article | 
     summary: data.summary || (data.content ? generateSummary(data.content) : existingArticle.summary),
     slug: data.title ? generateSlug(data.title) : existingArticle.slug,
     featured_image: data.featured_image !== undefined ? data.featured_image : existingArticle.featured_image,
-    viewCount: existingArticle.viewCount || 0,
+    view_count: existingArticle.view_count || 0,
     likes: existingArticle.likes || 0
   }
   
@@ -454,7 +454,7 @@ export async function incrementViewCount(id: string): Promise<void> {
   const article = articles.find(a => a.id === id)
   
   if (article) {
-    article.viewCount = (article.viewCount || 0) + 1
+    article.view_count = (article.view_count || 0) + 1
     await writeArticles(articles)
   }
 } 
